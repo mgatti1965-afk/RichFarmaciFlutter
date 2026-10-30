@@ -1,0 +1,68 @@
+================================================================
+01 - STATO AMBIENTE FLUTTER (verificato il 29/10/2026)
+================================================================
+
+NOTA: la shell integrata non cattura l'output dei comandi, quindi i dati
+sono stati ottenuti scrivendo l'output su file. flutter doctor NON e'
+riuscito a girare: il toolchain non e' stato verificato completamente.
+
+----------------------------------------------------------------
+1.1 TABELLA DI STATO
+----------------------------------------------------------------
+SDK Flutter       : presente in C:\flutter - versione 3.47.7 stable,
+                    Dart 3.13.5
+PATH              : ERRATO. Contiene "C:\Flutter" ma deve essere
+                    "C:\flutter\bin". Per questo il comando "flutter"
+                    risulta non riconosciuto.
+Primo avvio tool  : NON COMPLETATO. "flutter.bat doctor -v" col percorso
+                    completo si ferma su "Building flutter tool..." con
+                    errore nel "pub upgrade". Causa non visibile
+                    (rete, proxy o permessi?).
+Estensioni VSCode : Dart-Code.dart-code 3.144.0 e Dart-Code.flutter
+                    3.144.0 installate (OK).
+Android SDK       : %LOCALAPPDATA%\Android\Sdk
+                    platforms 34, 35, 36, 36.1, 37.0
+                    build-tools 34.0.0 ... 37.0.0
+                    platform-tools, emulator presenti
+cmdline-tools     : MANCANTE (cartella vuota). flutter doctor lo
+                    segnalera' e --android-licenses non funzionera'.
+ANDROID_HOME      : non impostato
+JAVA_HOME         : non impostato
+Java nel PATH     : JDK 11 (troppo vecchio per Gradle/AGP moderni).
+                    Usare il JBR di Android Studio (JDK 17+):
+                    C:\Program Files\Android\Android Studio\jbr
+Git               : presente
+Chrome            : presente
+Visual Studio     : presente (serve solo per target Windows)
+iOS               : NON compilabile da Windows. Serve un Mac con Xcode
+                    e CocoaPods, oppure CI cloud con runner macOS
+                    (Codemagic, GitHub Actions).
+
+----------------------------------------------------------------
+1.2 AZIONI DA ESEGUIRE (PowerShell normale)
+----------------------------------------------------------------
+# 1) Correggere PATH e variabili
+[Environment]::SetEnvironmentVariable("Path", ([Environment]::GetEnvironmentVariable("Path","User") -replace 'C:\\Flutter;?','') + ";C:\flutter\bin", "User")
+[Environment]::SetEnvironmentVariable("ANDROID_HOME", "$env:LOCALAPPDATA\Android\Sdk", "User")
+[Environment]::SetEnvironmentVariable("JAVA_HOME", "C:\Program Files\Android\Android Studio\jbr", "User")
+
+# 2) Chiudere e riaprire il terminale, poi:
+git -C C:\flutter status      # verifica che il checkout non sia corrotto
+flutter doctor -v
+flutter doctor --android-licenses
+
+# 3) Installare cmdline-tools:
+#    Android Studio > SDK Manager > SDK Tools >
+#    "Android SDK Command-line Tools (latest)"
+
+# 4) Se "pub upgrade" fallisce ancora: incollare l'errore completo.
+
+----------------------------------------------------------------
+1.3 CHECKLIST
+----------------------------------------------------------------
+[ ] PATH corretto (C:\flutter\bin)
+[ ] ANDROID_HOME e JAVA_HOME impostati
+[ ] cmdline-tools installato
+[ ] flutter doctor -v senza errori per Android
+[ ] licenze Android accettate
+[ ] (iOS) Mac o CI macOS disponibile

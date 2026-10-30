@@ -1,0 +1,56 @@
+================================================================
+06 - DECISIONI APERTE E PROSSIMI PASSI
+================================================================
+DECISIONI PRESE (aggiornate il 29/10/2026)
+----------------------------------------------------------------
+D1 = SOLO IMPORT DEL JSON. Nessuna migrazione del DB Room ne' delle
+     SharedPreferences. La nuova app parte pulita.
+D2 = Riverpod + Drift (scelta dell'assistente). Modelli scritti a mano,
+     senza freezed.
+D3 = MANTENERE il pre-popolamento con il codice fiscale speciale.
+     Verra' isolato in una sola costante/funzione.
+D4 = default: NON portare Firebase AI, CameraX, location, Retrofit.
+D5 = Nessun Mac: build iOS tramite CI macOS (Codemagic o GitHub
+     Actions). Serve comunque un account Apple Developer.
+D6 = default: data salvata come timestamp; i vecchi backup vengono
+     convertiti all'import.
+D7 = Molto semplice: "Esporta" crea il file di archivio e apre
+     Salva/Condividi; "Importa" fa scegliere il file. Niente
+     scrittura automatica in Download e niente auto-restore.
+PRIORITA' TRASVERSALE: l'app e' per ANZIANI (vedi file 07).
+
+
+
+DECISIONI CHE SERVONO PRIMA DI PARTIRE
+----------------------------------------------------------------
+[ ] D1. Aggiornamento in-place per gli utenti attuali, oppure basta
+        l'import del backup JSON?
+        (influenza applicationId, schema DB e migrazione preferenze)
+[ ] D2. Stack Flutter: confermare Riverpod + Drift (o indicare
+        alternative, es. Bloc, sqflite, Isar).
+[ ] D3. Codice fiscale hard-coded con farmaci di default: scartarlo?
+        (consigliato: si')
+[ ] D4. Firebase AI, CameraX, location, Retrofit: portarli o no?
+        (nel codice letto non risultano usati)
+[ ] D5. iOS: disponi di un Mac/Xcode o userai una CI macOS?
+[ ] D6. Storico richieste: ok passare a timestamp ISO-8601 con
+        conversione dei vecchi backup?
+[ ] D7. Backup: ok sostituire Download/ + auto-restore con share sheet
+        e file picker?
+
+COSE ANCORA DA VERIFICARE NEL CODICE KOTLIN
+----------------------------------------------------------------
+[ ] Leggere MainScreen, SettingsPanel, MedicationComponents,
+    MedicationEditorDialog, SharedUi, MarkdownComponents, MainActivity.
+[ ] Dove e' usato DonationDialog / donation_count.
+[ ] Dove e' usato Markdown e perche'.
+[ ] Uso di READ_CONTACTS (importazione da rubrica?).
+[ ] Contenuto di strings.xml, colors.xml, themes.xml e dei test
+    esistenti (da portare come test Dart).
+
+PROSSIMI PASSI OPERATIVI
+----------------------------------------------------------------
+1. Sistemare l'ambiente (file 01) e incollarmi l'output di
+   "flutter doctor -v".
+2. Rispondere alle decisioni D1-D7.
+3. Io eseguo Fase 0 (scaffolding) e Fase 1 (modelli + test).

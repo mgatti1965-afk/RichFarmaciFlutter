@@ -1,0 +1,100 @@
+================================================================
+05 - PIANO DI MIGRAZIONE A FLUTTER (Android + iOS)
+================================================================
+
+STACK PROPOSTO (da confermare)
+    Stato            : Riverpod
+    Database         : Drift (SQLite, analogo a Room)
+    Modelli          : freezed + json_serializable
+    Preferenze       : shared_preferences
+    Notifiche        : flutter_local_notifications + timezone
+    Invio            : url_launcher
+    Backup           : share_plus + file_picker
+    Navigazione      : go_router
+
+----------------------------------------------------------------
+FASE 0 - AMBIENTE
+----------------------------------------------------------------
+- Sistemare PATH, ANDROID_HOME, JAVA_HOME, cmdline-tools, licenze
+  (vedi file 01).
+- flutter doctor -v pulito per Android.
+- Creare il progetto in una cartella separata o branch:
+    flutter create --org com.aistudio.richfarmaci --project-name richfarmaci --platforms android,ios <cartella>
+- Se serve l'update in-place, mantenere applicationId
+  com.aistudio.richfarmaci.bqvny.
+
+----------------------------------------------------------------
+FASE 1 - MODELLI DI DATI  (lib/data/models)
+----------------------------------------------------------------
+- Profile, Medication, SentMedication, SentRequest, PatientSettings,
+  BackupData.
+- Enum SendChannel {whatsapp, sms, email} al posto di Int.
+- Enum FrequencyUnit {ore, giorni} al posto di String.
+- SentRequest: timestamp DateTime + lista tipizzata di SentMedication.
+- Serializzazione compatibile con il JSON di backup attuale (version=1)
+  e parser per farmaciSerialized e per la data italiana.
+- Test unitari: serializzazione, round-trip, import di un backup reale.
+
+----------------------------------------------------------------
+FASE 2 - PERSISTENZA
+----------------------------------------------------------------
+- Tabelle Drift: profiles, medications, sent_requests (FK + cascade,
+  PRAGMA foreign_keys=ON).
+- DAO con Stream al posto di Flow.
+- SettingsStore: active_profile_id, donation_count, onboarding_shown,
+  disclaimer_accepted.
+- Decisione su compatibilita' con il DB Room esistente (rischio 6).
+
+----------------------------------------------------------------
+FASE 3 - LOGICA DI BUSINESS PURA  (lib/domain)
+----------------------------------------------------------------
+Senza dipendenze da UI o piattaforma, quindi facilmente testabile.
+- MessageBuilder: stesso formato di buildFormattedMessage; test sulle
+  stringhe attese (casi: 1 vs piu' scatole, note base/temp, campi vuoti).
+- SendUriBuilder: WhatsApp, SMS, Email (encoding corretto).
+- NotificationScheduler: calcolo prossime occorrenze (multi-orario,
+  ORE/GIORNI, orario passato, freq=0). Test sui casi limite e cambio ora
+  legale.
+- Validators: isConfigured, pulizia telefono, CF maiuscolo.
+- BackupService: export/import JSON.
+
+----------------------------------------------------------------
+FASE 4 - REPOSITORY E CONTROLLER
+----------------------------------------------------------------
+- Repository sopra Drift.
+- Controller/provider Riverpod al posto di MainViewModel, separando:
+  profili, profilo attivo, farmaci, storico, selezione form,
+  impostazioni, backup.
+
+----------------------------------------------------------------
+FASE 5 - SERVIZI DI PIATTAFORMA
+----------------------------------------------------------------
+- Notifiche: permessi (Android 13+, iOS), allarmi esatti, reschedule al
+  boot, finestra di programmazione iOS (limite 64).
+- Apertura canali di invio (url_launcher) + config manifest/Info.plist.
+- Condivisione e import backup.
+
+----------------------------------------------------------------
+FASE 6 - UI
+----------------------------------------------------------------
+Schermate da portare in Material 3:
+  MainScreen (richiesta + storico), SettingsPanel, editor farmaci,
+  onboarding, disclaimer, dialog donazione (se usato), componenti
+  Markdown (se usati), tema, icone e asset
+  (ic_richfarmaci_logo_asset.jpg).
+
+----------------------------------------------------------------
+FASE 7 - TEST E RILASCIO
+----------------------------------------------------------------
+- Port dei test esistenti (migrazione DB, PatientSettingsManager,
+  MainViewModel), widget test, integration test.
+- CI con build Android e iOS (runner macOS), signing, store listing.
+
+----------------------------------------------------------------
+ORDINE CONSIGLIATO PER IL LAVORO PASSO-PASSO
+----------------------------------------------------------------
+1) Fase 0 (ambiente)  ->  2) Fase 1 (modelli + test)
+3) Fase 3 (logica pura + test)  ->  4) Fase 2 (persistenza)
+5) Fase 4  ->  6) Fase 5  ->  7) Fase 6  ->  8) Fase 7
+La Fase 3 prima della 2 permette di validare subito la parita'
+funzionale con l'app Kotlin senza dipendere dal DB.

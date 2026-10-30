@@ -1,0 +1,18 @@
+================================================================
+MIGRAZIONE RICHFARMACI: KOTLIN/COMPOSE -> FLUTTER (Android + iOS)
+Analisi del 29/10/2026
+================================================================
+
+Leggi i file nell'ordine, uno alla volta:
+
+  01_ambiente_flutter.txt             Stato Flutter/SDK e azioni da fare
+  02_struttura_progetto_android.txt   Stack, file, modello dati, DAO
+  03_logica_di_business.txt           Cosa deve fare l'app (da portare)
+  04_rischi_e_punti_di_attenzione.txt Problemi e soluzioni
+  05_piano_di_migrazione.txt          Fasi 0-7 e ordine di lavoro
+  06_decisioni_aperte.txt             Domande + prossimi passi
+
+Limiti dell'analisi:
+- flutter doctor non e' riuscito a girare (vedi 01).
+- I file UI, MainActivity e i test non sono stati letti in dettaglio.
+- Nessun file del progetto Kotlin e' stato modificato.

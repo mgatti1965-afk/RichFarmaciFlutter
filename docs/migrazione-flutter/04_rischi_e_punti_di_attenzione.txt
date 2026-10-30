@@ -1,0 +1,80 @@
+================================================================
+04 - RISCHI E PUNTI DI ATTENZIONE
+================================================================
+
+----------------------------------------------------------------
+RISCHIO 1 - NOTIFICHE SU iOS
+----------------------------------------------------------------
+Android riprogramma la notifica successiva da un BroadcastReceiver.
+iOS non esegue codice alla consegna di una notifica locale.
+Soluzione: pre-programmare le prossime occorrenze con
+flutter_local_notifications (zonedSchedule + timezone).
+iOS limita a circa 64 notifiche pendenti: serve una finestra di
+programmazione e un ricalcolo all'apertura dell'app.
+
+----------------------------------------------------------------
+RISCHIO 2 - BACKUP IN Download/
+----------------------------------------------------------------
+Dipende da MANAGE_EXTERNAL_STORAGE, limitato da Google Play e
+inesistente su iOS.
+Soluzione: share sheet (share_plus) per l'export e file picker
+(file_picker) per l'import. L'auto-restore all'avvio diventa
+un'azione esplicita "Importa backup".
+
+----------------------------------------------------------------
+RISCHIO 3 - ORDINAMENTO DELLO STORICO
+----------------------------------------------------------------
+"data" e' una stringa localizzata ordinata con ORDER BY data DESC e
+poi invertita in memoria: l'ordine non e' affidabile.
+Soluzione: nel nuovo modello salvare un timestamp ISO-8601 e formattare
+solo in UI. L'import dei vecchi backup deve fare il parsing della
+stringa italiana (mesi abbreviati, "Ore").
+
+----------------------------------------------------------------
+RISCHIO 4 - DATO SENSIBILE NEL CODICE
+----------------------------------------------------------------
+savePatientSettings contiene un codice fiscale hard-coded
+(CLLRNN40M59L957V) che precarica 7 farmaci di default.
+Sembra un dato personale o di test.
+Proposta: NON portarlo; sostituirlo con un'azione esplicita
+(es. "Aggiungi farmaci di esempio"). Valutare anche la rimozione dal
+repository Kotlin e dalla cronologia git.
+
+----------------------------------------------------------------
+RISCHIO 5 - SCHEME URL E MANIFEST
+----------------------------------------------------------------
+- WhatsApp su iOS: serve LSApplicationQueriesSchemes ("whatsapp")
+  in Info.plist.
+- Android: <queries> con com.whatsapp (gia' presente nel manifest).
+- SMS: il parametro del corpo cambia (Android "?body=", iOS "&body="
+  secondo il formato del separatore). Testare su entrambi.
+- Permessi Android da replicare: POST_NOTIFICATIONS,
+  SCHEDULE_EXACT_ALARM/USE_EXACT_ALARM, RECEIVE_BOOT_COMPLETED,
+  VIBRATE, READ_CONTACTS (verificarne l'uso).
+
+----------------------------------------------------------------
+RISCHIO 6 - AGGIORNAMENTO IN-PLACE PER UTENTI ESISTENTI
+----------------------------------------------------------------
+Se i dati attuali devono sopravvivere:
+- mantenere lo stesso applicationId (com.aistudio.richfarmaci.bqvny);
+- aprire con Drift lo stesso file "richfarmaci_database" (user_version
+  = 5, attenzione alla tabella room_master_table);
+- le SharedPreferences native ("richfarmaci_prefs") NON sono leggibili
+  dal plugin Flutter (usa "FlutterSharedPreferences" con prefisso
+  "flutter."): serve un MethodChannel Kotlin per una migrazione
+  una tantum.
+Alternativa: partire puliti e importare solo il JSON di backup.
+
+----------------------------------------------------------------
+RISCHIO 7 - SIGNING RELEASE
+----------------------------------------------------------------
+build.gradle.kts usa my-upload-key.jks o debug.keystore con password
+di default ("android"). Va ricreato in android/app/build.gradle.kts
+della nuova app, con le credenziali fuori dal repository.
+
+----------------------------------------------------------------
+RISCHIO 8 - DIPENDENZE NON CHIARE
+----------------------------------------------------------------
+Firebase AI, CameraX, location, Retrofit: non viste usate. Verificare
+con una ricerca nel codice prima di portarle (evitare di portare codice
+morto e di dover configurare Firebase su iOS senza necessita').

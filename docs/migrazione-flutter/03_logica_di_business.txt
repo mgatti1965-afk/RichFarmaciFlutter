@@ -1,0 +1,118 @@
+================================================================
+03 - LOGICA DI BUSINESS DA PORTARE
+================================================================
+Fonte principale: ui/viewmodel/MainViewModel.kt, util/*, receiver/*
+
+----------------------------------------------------------------
+3.1 COMPOSIZIONE DEL MESSAGGIO  (buildFormattedMessage)
+----------------------------------------------------------------
+Sezioni unite da una riga vuota (\n\n):
+ 1. messaggioTesta (trim), se non vuoto
+ 2. elenco farmaci selezionati, separati da riga vuota:
+        "- {nome}: {qty} {scatola|scatole}{note}"
+    - qty = quantita' scelta, altrimenti med.scatole
+    - "scatola" se qty == 1, altrimenti "scatole"
+    - note: " ({base} - {temp})" se entrambe, " ({temp})" o " ({base})"
+ 3. footer, righe separate da \n:
+        "Nome Paziente: {pazienteNome}"
+        "Codice Fiscale: {pazienteCf in MAIUSCOLO}"
+ 4. messaggioCoda (trim), se non vuoto
+
+Messaggio veloce (generateQuickMessageIntent):
+    "Messaggio da {pazienteNome} (CF: {pazienteCf}):\n\n{testo}"
+
+----------------------------------------------------------------
+3.2 SELEZIONE FARMACI PER LA RICHIESTA
+----------------------------------------------------------------
+- toggleMedicationSelection: seleziona (pre-compila qty = med.scatole,
+  nota temporanea "") o deseleziona (pulisce qty e nota).
+- setQuantityForMedication: qty = max(qty, 1).
+- updateSelection(med, qty): qty <= 0 deseleziona; altrimenti seleziona
+  e imposta la quantita'.
+- Un farmaco messo "in pausa" viene deselezionato.
+- Stato form: selectedMedicationIds, selectedQuantities, selectedNotes.
+- clearFormSelection dopo invio e dopo cambio profilo.
+
+----------------------------------------------------------------
+3.3 STORICO RICHIESTE  (recordSentRequest)
+----------------------------------------------------------------
+- Per ogni farmaco selezionato crea SentMedication con
+  nota combinata: "{base} - {temp}" / solo temp / solo base.
+- data = formato "dd MMM yyyy, 'Ore' HH:mm" con Locale.ITALIAN.
+- Salva SentRequest con testoCompleto = messaggio inviato, poi reset form.
+- La UI mostra lo storico invertito (list.reversed()).
+
+----------------------------------------------------------------
+3.4 CANALI DI INVIO  (generateMessageIntent)
+----------------------------------------------------------------
+tipoInvio 0 - WhatsApp:
+    https://api.whatsapp.com/send?phone={tel senza "+" e spazi}&text={msg URL-encoded}
+tipoInvio 1 - SMS:
+    smsto:{telefono}  con extra sms_body = messaggio
+tipoInvio 2 - Email:
+    mailto:{email}?subject={enc("Comunicazione da: {pazienteNome}")}&body={enc(msg)}
+altro: nessun intent.
+
+----------------------------------------------------------------
+3.5 PROFILI E IMPOSTAZIONI
+----------------------------------------------------------------
+- Avvio: migra le vecchie SharedPreferences in un Profile se non ci
+  sono profili ma la config legacy e' completa; propone auto-restore se
+  non configurato e esiste il backup; seleziona il primo profilo;
+  se non ci sono profili ne' backup apre le impostazioni.
+- selectProfile: salva active_profile_id, ricarica, pulisce il form.
+- savePatientSettings: crea o aggiorna il profilo, poi riprogramma le
+  notifiche di tutti i farmaci del profilo.
+- deleteProfile / deleteCurrentProfile: cancella; se era attivo passa al
+  primo rimasto; se non ne restano apre le impostazioni.
+- resetEverything: svuota DB e preferenze.
+- isConfigured: pazienteNome, pazienteCf, medicoNome non vuoti e
+  contatto (email se tipoInvio==2, altrimenti telefono).
+- Salvataggio PatientSettingsManager: trim su tutto; CF in maiuscolo;
+  telefono senza spazi e senza caratteri diversi da "+" e cifre.
+
+----------------------------------------------------------------
+3.6 FARMACI (CRUD)
+----------------------------------------------------------------
+- addMedication: richiede nome non vuoto, nome trim, scatole >= 0,
+  note trim; programma la notifica se attiva.
+- toggle pausa: invert inPausa, deseleziona, annulla/riprogramma notifica.
+- update / delete: aggiornano e riprogrammano/annullano la notifica.
+
+----------------------------------------------------------------
+3.7 NOTIFICHE  (NotificationHelper + NotificationReceiver)
+----------------------------------------------------------------
+Pianificazione per farmaco:
+ - se !notificaAttiva o inPausa: annulla e termina.
+ - orarioNotifica = lista "HH:mm" separata da virgola (default 08:00).
+ - per ogni orario: istante di oggi; se gia' passato e
+   frequenzaValore > 0:
+       ORE   : step = (differenza / (freq*3600s)) + 1, aggiunge
+               step*freq ore
+       GIORNI: step = (differenza / (freq*86400s)) + 1, aggiunge
+               step*freq giorni
+ - si sceglie il minimo istante futuro tra tutti gli orari.
+ - Android 12+: allarme esatto se consentito, altrimenti inesatto.
+Alla ricezione: mostra la notifica solo se il profilo ha
+notificheAttive; riprogramma la prossima occorrenza solo se farmaco
+attivo, non in pausa e profilo con notifiche.
+Al BOOT_COMPLETED: riprogramma tutti i farmaci attivi.
+Canale: "medication_reminders" / "Promemoria Farmaci", importanza alta,
+vibrazione 0,500,200,500,200,500.
+
+----------------------------------------------------------------
+3.8 BACKUP E RIPRISTINO
+----------------------------------------------------------------
+Export: legge profili, farmaci, richieste + preferenze, scrive JSON
+indentato in Download/RichFarmaci_Backup.json.
+Import: legge il file, svuota il DB, reinserisce tutto, ripristina
+preferenze, imposta come attivo il primo profilo.
+Auto-restore: all'avvio, se non configurato e il file esiste.
+
+----------------------------------------------------------------
+3.9 ALTRO
+----------------------------------------------------------------
+- Extensions.capitalizeWords()
+- Contatore "donazioni" (incrementDonationCount) e DonationDialog
+  (da verificare l'uso in UI)
+- Farmaci di default (7) inseriti per un CF specifico (vedi 04, rischio 4)

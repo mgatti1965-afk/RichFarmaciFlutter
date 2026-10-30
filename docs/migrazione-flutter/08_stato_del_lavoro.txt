@@ -1,0 +1,70 @@
+================================================================
+08 - STATO DEL LAVORO (aggiornato il 29/10/2026)
+================================================================
+Se la conversazione con l'assistente si perde, riparti da qui.
+
+POSIZIONI
+----------------------------------------------------------------
+Progetto Kotlin (originale, NON modificato):
+    C:\Users\mgatt\AndroidStudioProjects\richfarmaci
+Progetto Flutter (nuovo), POSIZIONE ATTUALE:
+    C:\dev\RichFarmaci
+    Copiato con robocopy il 29/10/2026 (il primo tentativo di spostamento
+    era stato negato da Windows). Verificato: flutter pub get ok e
+    flutter test = 98 test passati nella nuova cartella.
+    La vecchia cartella C:\Users\mgatt\AndroidStudioProjects\
+    richfarmaci_flutter e' ancora presente: l'utente la cancellera'.
+    Nella nuova cartella restano file di lavoro dell'assistente da
+    togliere: step_output.txt, check_output.txt, run_checks.ps1, tool\
+Il nome del pacchetto Dart resta "richfarmaci" (deve essere minuscolo).
+Il progetto Flutter non e' sotto Git.
+
+AMBIENTE
+----------------------------------------------------------------
+Flutter 3.47.7 stable, Dart 3.13.5 in C:\flutter.
+flutter doctor: tutto verde (confermato dall'utente).
+iOS: nessun Mac, build tramite CI macOS (da preparare in Fase 7).
+
+DECISIONI PRESE
+----------------------------------------------------------------
+Vedi 06_decisioni_aperte.txt. In breve: solo import JSON, Riverpod +
+Drift, codice fiscale speciale MANTENUTO (lib/domain/sample_medications.dart),
+export/import semplice, app per ANZIANI (vedi 07_linee_guida_anziani.txt).
+
+FASI COMPLETATE
+----------------------------------------------------------------
+Fase 1 - Modelli di dati        (lib/data/models)          FATTA
+Fase 3 - Logica di business     (lib/domain)               FATTA
+Fase 2 - Database e backup      (lib/data)                 FATTA
+Ultima verifica: flutter analyze senza problemi, 98 test passati.
+(Dopo lo spostamento va rieseguita: vedi sotto.)
+
+DA FARE (in ordine)
+----------------------------------------------------------------
+Fase 4 - Controller Riverpod (sostituto di MainViewModel), senza UI.
+Fase 5 - Servizi di piattaforma: notifiche, apertura WhatsApp/SMS/email,
+         salvataggio e scelta del file di archivio.
+Fase 6 - Schermate (rispettando le linee guida per anziani).
+Fase 7 - Test finali, CI per iOS, firma e pubblicazione.
+
+PROSSIMI PASSI PRATICI
+----------------------------------------------------------------
+1. In VS Code: File > Open Folder > C:\dev\RichFarmaci
+2. Cancellare la vecchia cartella richfarmaci_flutter (dopo aver
+   chiuso eventuali finestre che la usano).
+3. Decidere se togliere i file di lavoro dalla nuova cartella.
+4. Poi, con l'ok dell'utente, Fase 4 (controller Riverpod).
+
+REGOLA CONCORDATA CON L'UTENTE
+----------------------------------------------------------------
+Chiedere SEMPRE conferma prima di: installare/rimuovere librerie,
+generare codice (build_runner), lanciare comandi o script lunghi
+(analyze, test, build), creare molti file in un colpo solo.
+
+NOTE TECNICHE
+----------------------------------------------------------------
+- La shell integrata non mostra l'output dei comandi: l'assistente lo
+  legge scrivendolo su file.
+- Libreria SQLite: drift_flutter (sqlite3_flutter_libs e' stata tolta).
+- Riverpod e' installato ma non ancora usato.
+- Il database e' provato solo in memoria (test), non su telefono.

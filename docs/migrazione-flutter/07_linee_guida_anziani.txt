@@ -1,0 +1,61 @@
+================================================================
+07 - LINEE GUIDA DI USABILITA' PER UTENTI ANZIANI
+================================================================
+Da applicare a OGNI schermata della nuova app Flutter.
+
+TESTO
+- Dimensione base non inferiore a 18 sp; titoli 24 sp o piu'.
+- Rispettare sempre la dimensione testo scelta nelle impostazioni del
+  telefono (textScaler). Provare fino al 200%: niente testo tagliato,
+  le schermate scorrono.
+- Niente testo grigio chiaro su bianco. Contrasto almeno 7:1 (AAA).
+- Una sola lingua semplice: frasi brevi, parole di uso comune,
+  niente sigle o termini tecnici (es. "Salva", non "Persisti").
+
+PULSANTI E TOCCO
+- Area di tocco minima 56 x 56 dp (il minimo Android e' 48).
+- Spazio tra i pulsanti di almeno 12 dp per evitare tocchi sbagliati.
+- Pulsanti con testo scritto, non solo icone. Se c'e' un'icona,
+  accanto c'e' sempre la parola.
+- Evitare gesti nascosti (swipe, pressione lunga, doppio tocco):
+  ogni azione deve avere un pulsante visibile.
+- Un'azione principale per schermata, ben evidente.
+
+NAVIGAZIONE
+- Poche schermate, struttura piatta. Tasto "Indietro" sempre visibile
+  e a parole ("Indietro").
+- Evitare menu nascosti, drawer, tab piccole.
+- Niente timeout che chiudono una schermata mentre si sta scrivendo.
+
+SICUREZZA DEI DATI
+- Ogni azione che cancella (profilo, farmaco, storico, "azzera tutto")
+  chiede conferma con una frase chiara e due pulsanti grandi:
+  "Si', cancella" / "No, annulla". Il pulsante sicuro e' il piu'
+  evidente.
+- Dopo ogni azione importante, un messaggio di conferma che resta
+  visibile abbastanza a lungo (non una snackbar di 2 secondi).
+- Gli errori dicono cosa e' successo e cosa fare, in parole semplici.
+
+FORM E INSERIMENTO
+- Etichette sempre visibili sopra il campo (non solo "hint" che
+  scompare).
+- Tastiera adatta al campo (numerica per telefono e quantita',
+  email per email).
+- Per le quantita' usare pulsanti grandi "+" e "-" al posto del solo
+  campo di testo.
+- Per gli orari usare il selettore orario di sistema.
+
+NOTIFICHE
+- Testo grande e chiaro, suono e vibrazione ben percepibili.
+- Spiegare con parole semplici perche' serve il permesso
+  notifiche, PRIMA di mostrare la richiesta di sistema.
+
+ACCESSIBILITA'
+- Etichette Semantics per TalkBack/VoiceOver su tutti i controlli.
+- Non usare solo il colore per comunicare uno stato (es. farmaco in
+  pausa: colore + scritta "In pausa").
+- Supporto orientamento verticale come principale.
+
+TEST
+- Widget test con textScaleFactor 2.0 per le schermate principali.
+- Prova con una persona anziana reale prima del rilascio.

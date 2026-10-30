@@ -1,0 +1,115 @@
+================================================================
+02 - STRUTTURA DEL PROGETTO ANDROID (Kotlin)
+================================================================
+
+----------------------------------------------------------------
+2.1 STACK
+----------------------------------------------------------------
+Linguaggio        : Kotlin 2.2.10
+UI                : Jetpack Compose + Material3
+Database          : Room 2.7.0, versione schema 5, DB "richfarmaci_database"
+JSON              : Moshi (BackupData)
+Asincrono         : coroutines + Flow/StateFlow
+SDK               : minSdk 24, targetSdk/compileSdk 35
+applicationId     : com.aistudio.richfarmaci.bqvny
+Namespace         : com.example
+
+Dipendenze dichiarate ma NON viste usate nel codice letto:
+Retrofit, OkHttp, Firebase AI, CameraX, Coil, accompanist-permissions,
+play-services-location, DataStore.
+=> DA VERIFICARE prima di decidere cosa portare.
+
+----------------------------------------------------------------
+2.2 MAPPA DEI FILE (app/src/main/java/com/example)
+----------------------------------------------------------------
+data/model/Models.kt
+    Profile, Medication, SentMedication, SentRequest, PatientSettings
+data/model/BackupData.kt
+    JSON di backup versionato
+data/db/AppDatabase.kt
+    Database Room v5, migrazioni 3->4 e 4->5
+data/db/MedicationDao.kt, ProfileDao.kt, SentRequestDao.kt
+data/preferences/PatientSettingsManager.kt
+    SharedPreferences "richfarmaci_prefs"
+data/repository/MedicationRepository.kt, ProfileRepository.kt,
+                 SentRequestRepository.kt
+ui/viewmodel/MainViewModel.kt  (~770 righe)
+    Contiene quasi tutta la logica di business
+util/BackupManager.kt          Export/import JSON in Download/
+util/NotificationHelper.kt     Pianificazione allarmi e notifiche
+util/Extensions.kt             capitalizeWords()
+receiver/NotificationReceiver.kt  Alla ricezione e al boot
+ui/screens/MainScreen.kt, SettingsPanel.kt, MedicationComponents.kt,
+           MedicationEditorDialog.kt, MarkdownComponents.kt, SharedUi.kt
+ui/theme/Color.kt, Theme.kt, Type.kt
+MainActivity.kt
+
+Risorse: icone launcher, ic_richfarmaci_logo_asset.jpg, colors/strings/themes.
+
+NON LETTI in dettaglio: file UI, MainActivity, test.
+Da controllare: uso di Firebase AI, Markdown, funzioni "donazione".
+
+----------------------------------------------------------------
+2.3 MODELLO DATI
+----------------------------------------------------------------
+Profile (tabella "profiles")
+    id (UUID, PK), pazienteNome, pazienteCf, medicoNome,
+    medicoTelefono, medicoEmail, secondoIndirizzo,
+    messaggioTesta  (default: "Gentile Dottore, Le chiedo cortesemente
+                     la prescrizione dei seguenti medicinali intestati a me:"),
+    messaggioCoda   (default: "La ringrazio per la disponibilita'.
+                     Cordiali saluti."),
+    tipoInvio (Int: 0=WhatsApp, 1=SMS, 2=Email),
+    notificheAttive (Bool),
+    descrizioneNotifica (default "E' ora di prendere il farmaco")
+
+Medication (tabella "medications", FK profileId -> profiles CASCADE)
+    id (UUID), profileId, nome, scatole (def 1), note,
+    inPausa, notificaAttiva,
+    orarioNotifica (String "HH:mm", piu' orari separati da virgola),
+    frequenzaValore (Int, 0 = nessuna ripetizione),
+    frequenzaTipo ("ORE" | "GIORNI")
+
+SentRequest (tabella "sent_requests", FK profileId CASCADE)
+    id, profileId, data (stringa localizzata es. "15 giu 2026, Ore 15:30"),
+    pazienteNome, medicoNome,
+    farmaciSerialized: elementi separati da "|||", campi da "###",
+        escape: "|" -> "\bar", "#" -> "\hash"
+        formato elemento: nome###scatole###note
+    testoCompleto
+
+SentMedication (non persistita): nome, scatole, note
+
+PatientSettings: vista dei campi di Profile (stessi campi/default).
+
+Preferenze globali (SharedPreferences "richfarmaci_prefs"):
+    active_profile_id, donation_count, onboarding_shown,
+    disclaimer_accepted
+    (+ chiavi legacy: paziente_nome, paziente_cf, medico_nome,
+     medico_telefono, medico_email, secondo_indirizzo, messaggio_testa,
+     messaggio_coda, tipo_invio_int, notifiche_attive,
+     descrizione_notifica)
+
+BackupData (JSON): version=1, profiles, medications, sentRequests,
+    donationCount, onboardingShown, disclaimerAccepted
+    File: Download/RichFarmaci_Backup.json
+
+----------------------------------------------------------------
+2.4 QUERY DEI DAO
+----------------------------------------------------------------
+Medication: per profilo ORDER BY nome ASC (Flow e snapshot),
+            snapshot globale, insert/insertAll (REPLACE), update,
+            delete, deleteById, clearAll
+Profile   : getAll (Flow e snapshot), getById, insert (REPLACE),
+            update, delete
+SentRequest: per profilo ORDER BY data DESC (Flow), insert (REPLACE),
+            delete, deleteById, clearAll
+
+----------------------------------------------------------------
+2.5 MIGRAZIONI ROOM
+----------------------------------------------------------------
+3 -> 4: ripetiOgniOre -> frequenzaValore, aggiunge frequenzaTipo='ORE'.
+4 -> 5: crea profiles, crea profilo "default_profile" recuperando
+        pazienteNome/medicoNome dalla prima sent_request, aggiunge
+        profileId + FK + indici a medications e sent_requests.
+Fallback: fallbackToDestructiveMigration().
