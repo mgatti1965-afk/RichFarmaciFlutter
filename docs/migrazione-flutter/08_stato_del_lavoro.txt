@@ -45,7 +45,7 @@ Fase 6 - Interfaccia Utente UI  (lib/ui, lib/main.dart)        FATTA
          - Schermata Editor Farmaco (MedicationEditorSheet)
          - Schermata Principale (MainScreen: tab richiesta, storico, invio)
          - Main.dart collegato con ProviderScope e override reali
-         - Workflow iOS (.github/workflows/ios.yml) configurato per build simulatore + artifact Appetize.io
+         - Workflow iOS (.github/workflows/ios.yml) configurato per build simulatore + release pubblica per link diretto Appetize.io
 
 DA FARE (PROSSIMI PASSI)
 ----------------------------------------------------------------
