@@ -23,7 +23,13 @@ class RequestSelection {
 
   bool get isEmpty => selectedIds.isEmpty;
 
+  /// Numero di farmaci selezionati per la richiesta.
+  int get count => selectedIds.length;
+
   bool isSelected(String medicationId) => selectedIds.contains(medicationId);
+
+  /// Quantita' scelta per id farmaco (se non impostata restituisce 1).
+  int quantity(String medicationId) => quantities[medicationId] ?? 1;
 
   /// Quantita' da usare: quella scelta, altrimenti quella standard.
   int quantityFor(Medication med) => quantities[med.id] ?? med.scatole;

@@ -7,6 +7,7 @@ import '../../app/request_controller.dart';
 import '../../app/state_providers.dart';
 import '../../data/models/medication.dart';
 import '../../data/models/sent_request.dart';
+import '../../domain/request_selection.dart';
 import '../theme/app_theme.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/help_dialog.dart';
@@ -330,7 +331,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   Widget _buildRequestTab({
     required AsyncValue<List<Medication>> medicationsAsync,
-    required dynamic selection,
+    required RequestSelection selection,
     required bool activeProfilePresent,
   }) {
     return medicationsAsync.when(
