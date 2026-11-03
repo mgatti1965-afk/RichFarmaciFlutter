@@ -1,4 +1,4 @@
-name: iOS Build and Test
+name: iOS Build for Appetize & Verification
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-ios:
-    name: Build & Verify iOS
+    name: Build iOS Simulator (Appetize)
     runs-on: macos-latest
 
     steps:
@@ -28,6 +28,18 @@ jobs:
       - name: Run Flutter Tests
         run: flutter test
 
-      - name: Build iOS Application (Release, no codesign)
-        run: flutter build ios --no-codesign --release
+      - name: Build iOS Simulator
+        run: flutter build ios --simulator --no-codesign
+
+      - name: Compress Runner.app for Appetize
+        run: |
+          cd build/ios/iphonesimulator
+          zip -r -y ../../../Runner.zip Runner.app
+
+      - name: Upload iOS Simulator Build (for Appetize.io)
+        uses: actions/upload-artifact@v4
+        with:
+          name: richfarmaci-ios-appetize
+          path: Runner.zip
+          retention-days: 7
 

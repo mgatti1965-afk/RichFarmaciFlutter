@@ -45,12 +45,12 @@ Fase 6 - Interfaccia Utente UI  (lib/ui, lib/main.dart)        FATTA
          - Schermata Editor Farmaco (MedicationEditorSheet)
          - Schermata Principale (MainScreen: tab richiesta, storico, invio)
          - Main.dart collegato con ProviderScope e override reali
-         - Workflow iOS (.github/workflows/ios.yml) configurato per build cloud
+         - Workflow iOS (.github/workflows/ios.yml) configurato per build simulatore + artifact Appetize.io
 
 DA FARE (PROSSIMI PASSI)
 ----------------------------------------------------------------
-1. Commit e push su GitHub per validare la build iOS su GitHub Actions.
-2. Esecuzione e test interattivo dell'app (su Chrome, Windows desktop o emulatore Android).
+1. Monitorare la build GitHub Actions e testare l'app iOS su Appetize.io.
+2. Provare l'SDK / emulatore Android (su richiesta utente, dopo iOS).
 3. Fase 7 - Rifiniture finali, icone app store, firma e rilascio.
 
 REGOLA CONCORDATA CON L'UTENTE
