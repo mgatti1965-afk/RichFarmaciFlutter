@@ -35,14 +35,16 @@ void main() {
 
   testWidgets('Mostra Disclaimer iniziale al primo avvio', (tester) async {
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.byType(DisclaimerDialog), findsOneWidget);
     expect(find.text('ACCETTO E CONTINUA'), findsOneWidget);
 
     // Tocca accetto
     await tester.tap(find.text('ACCETTO E CONTINUA'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     // Ora mostra l'onboarding
     expect(find.byType(OnboardingDialog), findsOneWidget);
@@ -55,11 +57,13 @@ void main() {
     env.container.read(disclaimerAcceptedProvider.notifier).set(true);
 
     await tester.pumpWidget(buildTestApp());
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.byType(OnboardingDialog), findsOneWidget);
     await tester.tap(find.text('INIZIA ORA'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
 
     // Entra nella MainScreen
     expect(find.text('RichFarmaci'), findsOneWidget);

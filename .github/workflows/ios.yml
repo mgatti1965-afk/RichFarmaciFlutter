@@ -11,6 +11,7 @@ jobs:
   build-ios:
     name: Build iOS Simulator (Appetize)
     runs-on: macos-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout Code
@@ -26,7 +27,7 @@ jobs:
         run: flutter pub get
 
       - name: Run Flutter Tests
-        run: flutter test
+        run: flutter test --concurrency=1
 
       - name: Build iOS Simulator
         run: flutter build ios --simulator --no-codesign
