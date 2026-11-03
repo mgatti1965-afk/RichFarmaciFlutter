@@ -41,8 +41,9 @@ Fase 6 - Interfaccia Utente UI  (lib/ui, lib/main.dart)        FATTA
          - Tema accessibile M3 per anziani (AppTheme, AppColors)
          - Asset logo (ic_richfarmaci_logo_asset.jpg)
          - Dialog: Disclaimer, Onboarding, Help, QuickMessage, Confirm
-         - Schermata Impostazioni (SettingsScreen: profilo, medico, backup)
-         - Schermata Editor Farmaco (MedicationEditorSheet)
+         - Schermata Impostazioni (SettingsScreen: profilo, medico, rubrica farmaci integrata, backup)
+         - Rimosso tasto azzera dati dall'app per sicurezza
+         - Schermata Editor Farmaco (MedicationEditorSheet con feedback snackbar e fallback profilo)
          - Schermata Principale (MainScreen: tab richiesta, storico, invio)
          - Main.dart collegato con ProviderScope e override reali
          - Workflow iOS (.github/workflows/ios.yml) configurato per build simulatore + release pubblica per link diretto Appetize.io

@@ -141,7 +141,21 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
           frequenzaTipo: _frequenzaTipo,
         );
       }
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.isEditing
+                  ? 'Farmaco "$name" aggiornato!'
+                  : 'Farmaco "$name" aggiunto alla rubrica!',
+              style: const TextStyle(fontSize: 16),
+            ),
+            backgroundColor: AppColors.greenPrimary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        Navigator.of(context).pop();
+      }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -158,7 +172,19 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
 
     if (confirm && mounted) {
       await ref.read(medicationControllerProvider).delete(widget.medication!);
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Farmaco "${widget.medication!.nome}" eliminato.',
+              style: const TextStyle(fontSize: 16),
+            ),
+            backgroundColor: AppColors.slate900,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        Navigator.of(context).pop();
+      }
     }
   }
 

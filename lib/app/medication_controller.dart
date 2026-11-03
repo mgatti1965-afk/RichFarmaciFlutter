@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/enums.dart';
 import '../data/models/medication.dart';
+import '../data/models/patient_settings.dart';
+import 'profile_controller.dart';
 import 'providers.dart';
 import 'reminder_sync.dart';
 import 'state_providers.dart';
@@ -12,10 +14,9 @@ class MedicationController {
 
   final Ref _ref;
 
-  /// Aggiunge un farmaco al profilo attivo. Restituisce null se non c'e'
-  /// un profilo attivo o il nome e' vuoto. Le quantita' negative diventano 0.
-  /// I valori predefiniti di frequenza (nessuna ripetizione, in ore) sono
-  /// quelli di addMedication in Kotlin.
+  /// Aggiunge un farmaco al profilo attivo. Se non c'e' ancora un profilo,
+  /// ne crea o seleziona uno automaticamente per non perdere i dati.
+  /// Le quantita' negative diventano 0.
   Future<Medication?> add({
     required String nome,
     int scatole = 1,
@@ -25,8 +26,21 @@ class MedicationController {
     int frequenzaValore = 0,
     FrequencyUnit frequenzaTipo = FrequencyUnit.ore,
   }) async {
-    final profileId = _ref.read(activeProfileIdProvider);
-    if (profileId == null || nome.trim().isEmpty) return null;
+    if (nome.trim().isEmpty) return null;
+
+    var profileId = _ref.read(activeProfileIdProvider);
+    if (profileId == null) {
+      final profiles = await _ref.read(profileRepositoryProvider).getAll();
+      if (profiles.isNotEmpty) {
+        profileId = profiles.first.id;
+        await _ref.read(activeProfileIdProvider.notifier).select(profileId);
+      } else {
+        final created = await _ref.read(profileControllerProvider).saveSettings(
+              const PatientSettings(pazienteNome: 'Paziente'),
+            );
+        profileId = created.id;
+      }
+    }
 
     final med = Medication(
       profileId: profileId,
