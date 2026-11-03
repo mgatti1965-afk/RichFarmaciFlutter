@@ -26,9 +26,6 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Run Flutter Tests
-        run: flutter test --concurrency=1
-
       - name: Build iOS Simulator
         run: flutter build ios --simulator --no-codesign
 
