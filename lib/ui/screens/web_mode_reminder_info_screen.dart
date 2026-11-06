@@ -26,7 +26,7 @@ class WebModeReminderInfoScreen extends ConsumerWidget {
               const Icon(Icons.notifications_off, size: 64, color: AppColors.orangeAlert),
               const SizedBox(height: 16),
               const Text(
-                'Funzione disponibile nelle versioni native Android e iOS nativa.',
+                'Funzione disponibile solo nelle versioni native Android e iOS.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 18,

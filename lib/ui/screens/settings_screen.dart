@@ -14,7 +14,7 @@ import '../../domain/settings_rules.dart';
 import '../../services/archive_file_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/confirmation_dialog.dart';
-import '../widgets/web_mode_banner.dart';
+import '../widgets/help_dialog.dart';
 import 'medication_editor_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -123,7 +123,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Impostazioni salvate con successo!', style: TextStyle(fontSize: 16)),
+            content: Text('Configurazione salvata con successo!', style: TextStyle(fontSize: 16)),
             backgroundColor: AppColors.greenPrimary,
             duration: Duration(seconds: 3),
           ),
@@ -264,25 +264,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  void _showWebReminderInfo() {
-    ref.read(telemetryProvider).track('web_reminder_action_blocked', params: {
-      'source': 'settings_reminder_section',
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Funzione disponibile nelle versioni native Android e iOS nativa.',
-          style: TextStyle(fontSize: 16),
-        ),
-        backgroundColor: AppColors.orangeAlert,
-      ),
-    );
-  }
-
   void _openMedicationEditor([Medication? med]) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MedicationEditorSheet(medication: med),
+      ),
+    );
+  }
+
+  void _openHelp() {
+    showDialog(
+      context: context,
+      builder: (_) => HelpDialog(
+        type: 'configurazione',
+        onDismiss: () => Navigator.of(context).pop(),
       ),
     );
   }
@@ -306,10 +301,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Impostazioni & Profilo',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        elevation: 0,
+        backgroundColor: AppColors.white,
+        title: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.settings,
+              size: 32,
+              color: AppColors.greenPrimary,
+            ),
+            SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                'Configurazione',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: AppColors.slate900,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
+        actions: [
+          IconButton(
+            onPressed: _openHelp,
+            icon: const Icon(Icons.help_outline, size: 28),
+            tooltip: 'Aiuto',
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SafeArea(
         child: Form(
@@ -317,8 +340,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: ListView(
             padding: const EdgeInsets.all(20.0),
             children: [
-              if (isWebMode) const WebModeBanner(),
-
               // 1. Gestione Profilo Paziente
               Card(
                 color: AppColors.blueInputBg,
@@ -497,20 +518,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       if (isWebMode) ...[
                         const SizedBox(height: 8),
                         const Text(
-                          'Funzione disponibile nelle versioni native Android e iOS nativa.',
+                          'Funzione disponibile solo nelle versioni native Android e iOS.',
                           style: TextStyle(
                             fontSize: 14,
                             color: AppColors.slate600,
                             fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: OutlinedButton.icon(
-                            onPressed: _showWebReminderInfo,
-                            icon: const Icon(Icons.info_outline),
-                            label: const Text('Dettagli disponibilita'),
                           ),
                         ),
                       ],
@@ -533,7 +545,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
               const SizedBox(height: 32),
 
-              // Pulsante Salva Impostazioni
+              // Pulsante Salva Configurazione
               ElevatedButton(
                 onPressed: _isSaving ? null : _saveSettings,
                 style: ElevatedButton.styleFrom(
@@ -543,7 +555,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: _isSaving
                     ? const CircularProgressIndicator(color: AppColors.white)
                     : const Text(
-                        'SALVA IMPOSTAZIONI',
+                        'SALVA CONFIGURAZIONE',
                         style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                       ),
               ),

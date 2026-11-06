@@ -157,5 +157,6 @@ class AppTheme {
   }
 }
 
+// ignore: non_constant_identifier_names
 RoundedRectangleBorder RoundedCornerShape(double radius, {BorderSide side = BorderSide.none}) =>
     RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius), side: side);

@@ -53,7 +53,7 @@ void main() {
       );
     }
 
-    testWidgets('Banner Web Mode visibile in MainScreen', (tester) async {
+    testWidgets('Banner Web Mode rimosso da MainScreen e SettingsScreen', (tester) async {
       await env.container.read(disclaimerAcceptedProvider.notifier).set(true);
       await env.container.read(onboardingShownProvider.notifier).set(true);
 
@@ -61,23 +61,55 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.byType(WebModeBanner), findsOneWidget);
+      expect(find.byType(WebModeBanner), findsNothing);
       expect(
         find.text('Versione web: promemoria automatici non disponibili.'),
-        findsOneWidget,
+        findsNothing,
       );
-    });
 
-    testWidgets('Banner Web Mode visibile in SettingsScreen', (tester) async {
       await tester.pumpWidget(buildTestApp(home: const SettingsScreen()));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.byType(WebModeBanner), findsOneWidget);
+      expect(find.byType(WebModeBanner), findsNothing);
       expect(
         find.text('Versione web: promemoria automatici non disponibili.'),
-        findsOneWidget,
+        findsNothing,
       );
+    });
+
+    testWidgets('Senza pazienti all\'avvio naviga automaticamente a SettingsScreen', (tester) async {
+      await env.container.read(disclaimerAcceptedProvider.notifier).set(true);
+      await env.container.read(onboardingShownProvider.notifier).set(true);
+
+      await tester.pumpWidget(buildTestApp());
+      await tester.pump();
+      await tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      });
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SettingsScreen), findsOneWidget);
+    });
+
+    testWidgets('Pulsanti Nuovo Farmaco e Aggiungi Farmaco non presenti in MainScreen', (tester) async {
+      await env.container.read(disclaimerAcceptedProvider.notifier).set(true);
+      await env.container.read(onboardingShownProvider.notifier).set(true);
+      await tester.runAsync(() async {
+        final p = await env.container
+            .read(profileControllerProvider)
+            .saveSettings(validSettings());
+        await env.container.read(activeProfileIdProvider.notifier).select(p.id);
+        await env.settle();
+      });
+
+      await tester.pumpWidget(buildTestApp(home: const MainScreen()));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('AGGIUNGI FARMACO'), findsNothing);
+      expect(find.text('Nuovo Farmaco'), findsNothing);
+      expect(find.text('Messaggio Veloce'), findsOneWidget);
     });
 
     testWidgets(
@@ -102,7 +134,7 @@ void main() {
         // Spiegazione visibile sotto lo switch
         expect(
           find.text(
-            'Funzione disponibile nelle versioni native Android e iOS nativa.',
+            'Funzione disponibile solo nelle versioni native Android e iOS.',
           ),
           findsOneWidget,
         );
@@ -112,13 +144,8 @@ void main() {
         final switchWidget = tester.widget<SwitchListTile>(switchFinder);
         expect(switchWidget.onChanged, isNull);
 
-        // Toccando "Dettagli disponibilita" viene mostrata la SnackBar e tracciata la telemetria
-        final detailsBtn = find.text('Dettagli disponibilita');
-        expect(detailsBtn, findsOneWidget);
-        await tester.tap(detailsBtn);
-        await tester.pump();
-
-        expect(env.telemetry.has('web_reminder_action_blocked'), isTrue);
+        // Nessun pulsante extra "Dettagli disponibilita"
+        expect(find.text('Dettagli disponibilita'), findsNothing);
       },
     );
 
@@ -131,15 +158,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Spiegazione visibile
-      expect(
-        find.text(
-          'Funzione disponibile nelle versioni native Android e iOS nativa.',
-        ),
-        findsOneWidget,
-      );
-
-      // Switch disabilitato
+      // La schermata rimane uguale: lo switch c'è ma è disabilitato
       final switchFinder = find.widgetWithText(
         SwitchListTile,
         'Promemoria Notifica',
@@ -148,8 +167,14 @@ void main() {
       final switchWidget = tester.widget<SwitchListTile>(switchFinder);
       expect(switchWidget.onChanged, isNull);
 
-      // Telemetria di sezione aperta
-      expect(env.telemetry.has('web_reminder_section_opened'), isTrue);
+      // Nessuna segnalazione o pulsante extra dentro l'editor farmaci
+      expect(
+        find.text(
+          'Funzione disponibile solo nelle versioni native Android e iOS.',
+        ),
+        findsNothing,
+      );
+      expect(find.text('Dettagli disponibilita'), findsNothing);
     });
 
     test('Aggiunta farmaco in Web Mode forza promemoria disattivati', () async {
@@ -192,7 +217,7 @@ void main() {
         expect(find.byType(WebModeReminderInfoScreen), findsOneWidget);
         expect(
           find.text(
-            'Funzione disponibile nelle versioni native Android e iOS nativa.',
+            'Funzione disponibile solo nelle versioni native Android e iOS.',
           ),
           findsOneWidget,
         );

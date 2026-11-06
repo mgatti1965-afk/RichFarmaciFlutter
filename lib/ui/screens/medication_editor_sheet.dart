@@ -65,10 +65,7 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
   }
 
   Future<void> _addOrEditTime([int? index]) async {
-    if (ref.read(isWebModeProvider)) {
-      _showWebReminderInfo();
-      return;
-    }
+    if (ref.read(isWebModeProvider)) return;
 
     final current = index != null && index < _orari.length
         ? NotificationScheduler.parseTime(_orari[index])
@@ -105,27 +102,9 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
   }
 
   void _removeTime(int index) {
-    if (ref.read(isWebModeProvider)) {
-      _showWebReminderInfo();
-      return;
-    }
+    if (ref.read(isWebModeProvider)) return;
     if (_orari.length <= 1) return;
     setState(() => _orari.removeAt(index));
-  }
-
-  void _showWebReminderInfo() {
-    ref.read(telemetryProvider).track('web_reminder_action_blocked', params: {
-      'source': 'medication_editor',
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Funzione disponibile nelle versioni native Android e iOS nativa.',
-          style: TextStyle(fontSize: 16),
-        ),
-        backgroundColor: AppColors.orangeAlert,
-      ),
-    );
   }
 
   Future<void> _handleSave() async {
@@ -370,26 +349,6 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
                         activeThumbColor: AppColors.greenPrimary,
                         contentPadding: EdgeInsets.zero,
                       ),
-                      if (isWebMode) ...[
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Funzione disponibile nelle versioni native Android e iOS nativa.',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.slate600,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: OutlinedButton.icon(
-                            onPressed: _showWebReminderInfo,
-                            icon: const Icon(Icons.info_outline),
-                            label: const Text('Dettagli disponibilita'),
-                          ),
-                        ),
-                      ],
                       if (_notificaAttiva) ...[
                         const Divider(height: 24),
                         const Text(

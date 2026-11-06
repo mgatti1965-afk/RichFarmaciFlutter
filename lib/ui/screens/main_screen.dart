@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/flags_providers.dart';
 import '../../app/request_controller.dart';
 import '../../app/state_providers.dart';
-import '../../app/web_mode.dart';
 import '../../data/models/medication.dart';
 import '../../data/models/sent_request.dart';
 import '../../domain/request_selection.dart';
@@ -12,8 +11,8 @@ import '../theme/app_theme.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/help_dialog.dart';
 import '../widgets/pharmacy_cross.dart';
-import '../widgets/web_mode_banner.dart';
 import 'disclaimer_dialog.dart';
+import 'donation_dialog.dart';
 import 'medication_editor_sheet.dart';
 import 'onboarding_dialog.dart';
 import 'quick_message_dialog.dart';
@@ -29,6 +28,7 @@ class MainScreen extends ConsumerStatefulWidget {
 class _MainScreenState extends ConsumerState<MainScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  bool _hasAutoNavigatedToSettings = false;
 
   @override
   void initState() {
@@ -40,6 +40,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _openDonation() {
+    showDialog(
+      context: context,
+      builder: (_) => const DonationDialog(),
+    );
   }
 
   void _openSettings() {
@@ -107,12 +114,12 @@ class _MainScreenState extends ConsumerState<MainScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-            'Completa prima i dati del paziente e del medico nelle Impostazioni.',
+            'Completa prima i dati del paziente e del medico in Configurazione.',
             style: TextStyle(fontSize: 16),
           ),
           backgroundColor: AppColors.redDanger,
           action: SnackBarAction(
-            label: 'IMPOSTAZIONI',
+            label: 'CONFIGURAZIONE',
             textColor: AppColors.white,
             onPressed: _openSettings,
           ),
@@ -220,11 +227,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
     }
 
     final activeProfile = ref.watch(activeProfileProvider);
-    final profiles = ref.watch(profilesProvider).value ?? [];
+    final profilesAsync = ref.watch(profilesProvider);
+    final profiles = profilesAsync.value ?? [];
+    if (profilesAsync.hasValue && profiles.isEmpty && !_hasAutoNavigatedToSettings) {
+      _hasAutoNavigatedToSettings = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _openSettings();
+        }
+      });
+    }
     final selection = ref.watch(requestSelectionProvider);
     final medicationsAsync = ref.watch(medicationsProvider);
     final historyAsync = ref.watch(historyProvider);
-    final isWebMode = ref.watch(isWebModeProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -245,6 +260,14 @@ class _MainScreenState extends ConsumerState<MainScreen>
         ),
         actions: [
           IconButton(
+            onPressed: _openDonation,
+            icon: const Text(
+              '☕',
+              style: TextStyle(fontSize: 22),
+            ),
+            tooltip: 'Offri un caffè',
+          ),
+          IconButton(
             onPressed: _openHelp,
             icon: const Icon(Icons.help_outline, size: 28),
             tooltip: 'Aiuto',
@@ -252,7 +275,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
           IconButton(
             onPressed: _openSettings,
             icon: const Icon(Icons.settings, size: 28),
-            tooltip: 'Impostazioni',
+            tooltip: 'Configurazione',
           ),
           const SizedBox(width: 8),
         ],
@@ -337,25 +360,18 @@ class _MainScreenState extends ConsumerState<MainScreen>
           ),
         ),
       ),
-      body: Column(
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          if (isWebMode) const WebModeBanner(),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // TAB 1: Richiesta Farmaci
-                _buildRequestTab(
-                  medicationsAsync: medicationsAsync,
-                  selection: selection,
-                  activeProfilePresent: activeProfile != null,
-                ),
-
-                // TAB 2: Cronologia Richieste
-                _buildHistoryTab(historyAsync: historyAsync),
-              ],
-            ),
+          // TAB 1: Richiesta Farmaci
+          _buildRequestTab(
+            medicationsAsync: medicationsAsync,
+            selection: selection,
+            activeProfilePresent: activeProfile != null,
           ),
+
+          // TAB 2: Cronologia Richieste
+          _buildHistoryTab(historyAsync: historyAsync),
         ],
       ),
       bottomNavigationBar: _tabController.index == 0
@@ -423,12 +439,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
                               'Aggiungi i tuoi farmaci abituali per poterli richiedere rapidamente.',
                               style: TextStyle(fontSize: 16, color: AppColors.slate600),
                               textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 20),
-                            ElevatedButton.icon(
-                              onPressed: () => _openMedicationEditor(),
-                              icon: const Icon(Icons.add),
-                              label: const Text('AGGIUNGI FARMACO'),
                             ),
                           ],
                         ),
@@ -589,24 +599,34 @@ class _MainScreenState extends ConsumerState<MainScreen>
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       )
-                    : Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: _openQuickMessage,
-                              icon: const Icon(Icons.chat_bubble_outline),
-                              label: const Text('Messaggio Veloce', style: TextStyle(fontSize: 16)),
+                    : Center(
+                        child: ElevatedButton.icon(
+                          onPressed: _openQuickMessage,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.greenPrimary,
+                            foregroundColor: AppColors.white,
+                            minimumSize: const Size(240, 52),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 14,
+                            ),
+                            shape: RoundedCornerShape(14),
+                            elevation: 2,
+                          ),
+                          icon: const Icon(
+                            Icons.chat_bubble_outline,
+                            size: 22,
+                            color: AppColors.white,
+                          ),
+                          label: const Text(
+                            'Messaggio Veloce',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.white,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _openMedicationEditor(),
-                              icon: const Icon(Icons.add),
-                              label: const Text('Nuovo Farmaco', style: TextStyle(fontSize: 16)),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
               ),
             ),
