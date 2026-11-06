@@ -9,7 +9,21 @@ import 'package:richfarmaci/data/settings_store.dart';
 import 'package:richfarmaci/services/archive_file_service.dart';
 import 'package:richfarmaci/services/link_opener.dart';
 import 'package:richfarmaci/services/reminder_scheduler.dart';
+import 'package:richfarmaci/services/telemetry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// Telemetria finta: registra gli eventi tracciati.
+class FakeTelemetry implements AppTelemetry {
+  final List<Map<String, dynamic>> tracked = [];
+
+  @override
+  void track(String event, {Map<String, Object?> params = const {}}) {
+    tracked.add({'event': event, 'params': params});
+  }
+
+  bool has(String event) => tracked.any((e) => e['event'] == event);
+  int count(String event) => tracked.where((e) => e['event'] == event).length;
+}
 
 /// Gestore promemoria finto: registra le richieste invece di programmarle.
 class FakeReminderScheduler implements ReminderScheduler {
@@ -54,19 +68,25 @@ class FakeArchiveFileService implements ArchiveFileService {
   String? sharedName;
   String? sharedJson;
   String? textToPick;
+  bool throwOnShare = false;
+  bool throwOnPick = false;
 
   @override
   Future<ArchiveShareOutcome> share({
     required String fileName,
     required String json,
   }) async {
+    if (throwOnShare) throw Exception('Share error');
     sharedName = fileName;
     sharedJson = json;
     return ArchiveShareOutcome.completed;
   }
 
   @override
-  Future<String?> pickText() async => textToPick;
+  Future<String?> pickText() async {
+    if (throwOnPick) throw Exception('Pick error');
+    return textToPick;
+  }
 }
 
 /// Ora fissa usata nei test.
@@ -75,22 +95,24 @@ final DateTime testNow = DateTime(2026, 6, 15, 15, 30);
 /// Ambiente di prova: database in memoria, preferenze finte, ora fissa.
 class TestEnv {
   TestEnv._(this.db, this.settings, this.scheduler, this.links, this.files,
-      this.container);
+      this.telemetry, this.container);
 
   final AppDatabase db;
   final SettingsStore settings;
   final FakeReminderScheduler scheduler;
   final FakeLinkOpener links;
   final FakeArchiveFileService files;
+  final FakeTelemetry telemetry;
   final ProviderContainer container;
 
-  static Future<TestEnv> create() async {
+  static Future<TestEnv> create({List<dynamic> extraOverrides = const []}) async {
     SharedPreferences.setMockInitialValues({});
     final db = AppDatabase(NativeDatabase.memory());
     final settings = await SettingsStore.open();
     final scheduler = FakeReminderScheduler();
     final links = FakeLinkOpener();
     final files = FakeArchiveFileService();
+    final telemetry = FakeTelemetry();
     final container = ProviderContainer(overrides: [
       appDatabaseProvider.overrideWithValue(db),
       settingsStoreProvider.overrideWithValue(settings),
@@ -98,6 +120,8 @@ class TestEnv {
       reminderSchedulerProvider.overrideWithValue(scheduler),
       linkOpenerProvider.overrideWithValue(links),
       archiveFileServiceProvider.overrideWithValue(files),
+      telemetryProvider.overrideWithValue(telemetry),
+      ...extraOverrides.cast(),
     ]);
     // Tiene "ascoltati" i flussi di dati durante il test. Con Riverpod 3
     // un provider letto soltanto con read() e' senza ascoltatori e viene
@@ -109,7 +133,7 @@ class TestEnv {
     container.listen(activeProfileProvider, (previous, next) {});
     container.listen(isConfiguredProvider, (previous, next) {});
     container.listen(canSendProvider, (previous, next) {});
-    return TestEnv._(db, settings, scheduler, links, files, container);
+    return TestEnv._(db, settings, scheduler, links, files, telemetry, container);
   }
 
   /// Lascia il tempo ai flussi del database di aggiornarsi.

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/profile.dart';
@@ -41,10 +42,11 @@ class RequestController {
 
   /// Link per aprire WhatsApp, SMS o email col testo gia' pronto,
   /// secondo il canale scelto nel profilo. Null senza profilo attivo.
-  Future<String?> buildSendUri(String message, {bool ios = false}) async {
+  Future<String?> buildSendUri(String message, {bool? ios}) async {
     final profile = await _activeProfile();
     if (profile == null) return null;
-    return SendUriBuilder.forSettings(profile.toSettings(), message, ios: ios);
+    final isIos = ios ?? (defaultTargetPlatform == TargetPlatform.iOS);
+    return SendUriBuilder.forSettings(profile.toSettings(), message, ios: isIos);
   }
 
   /// Salva la richiesta nello storico con l'ora attuale e svuota la scelta.
@@ -70,8 +72,9 @@ class RequestController {
   /// Apre WhatsApp, SMS o email col testo pronto. Restituisce vero se
   /// l'app e' stata aperta. Non salva nulla nello storico: lo si fa con
   /// [recordSent] solo se l'apertura e' riuscita.
-  Future<bool> openSendApp(String message, {bool ios = false}) async {
-    final uri = await buildSendUri(message, ios: ios);
+  Future<bool> openSendApp(String message, {bool? ios}) async {
+    final isIos = ios ?? (defaultTargetPlatform == TargetPlatform.iOS);
+    final uri = await buildSendUri(message, ios: isIos);
     if (uri == null) {
       _ref.read(telemetryProvider).track('message_send_failed', params: {
         'reason': 'uri_not_available',
@@ -92,10 +95,11 @@ class RequestController {
   /// Invia la richiesta in un colpo solo: compone il testo, apre l'app e,
   /// se si e' aperta, salva la voce nello storico. Restituisce la voce
   /// salvata, oppure null se non c'e' un profilo o l'app non si e' aperta.
-  Future<SentRequest?> sendRequest({bool ios = false}) async {
+  Future<SentRequest?> sendRequest({bool? ios}) async {
+    final isIos = ios ?? (defaultTargetPlatform == TargetPlatform.iOS);
     final message = await buildMessage();
     if (message == null) return null;
-    if (!await openSendApp(message, ios: ios)) return null;
+    if (!await openSendApp(message, ios: isIos)) return null;
     return recordSent(message);
   }
 
