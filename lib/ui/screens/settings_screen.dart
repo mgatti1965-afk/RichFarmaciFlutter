@@ -128,7 +128,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             duration: Duration(seconds: 3),
           ),
         );
-        Navigator.of(context).pop();
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
