@@ -75,18 +75,20 @@ void main() {
 
   testWidgets('Test accessibilità per anziani: textScaleFactor 2.0',
       (tester) async {
-    env.container.read(disclaimerAcceptedProvider.notifier).set(true);
-    env.container.read(onboardingShownProvider.notifier).set(true);
+    await env.container.read(disclaimerAcceptedProvider.notifier).set(true);
+    await env.container.read(onboardingShownProvider.notifier).set(true);
 
-    // Salva un profilo e dei farmaci
-    final p = await env.container
-        .read(profileControllerProvider)
-        .saveSettings(validSettings());
-    await env.container.read(activeProfileIdProvider.notifier).select(p.id);
-    await env.container
-        .read(medicationControllerProvider)
-        .add(nome: 'Cardioaspirina', scatole: 1);
-    await env.settle();
+    // Salva un profilo e dei farmaci dentro runAsync per consentire le operazioni di I/O asincrone
+    await tester.runAsync(() async {
+      final p = await env.container
+          .read(profileControllerProvider)
+          .saveSettings(validSettings());
+      await env.container.read(activeProfileIdProvider.notifier).select(p.id);
+      await env.container
+          .read(medicationControllerProvider)
+          .add(nome: 'Cardioaspirina', scatole: 1);
+      await env.settle();
+    });
 
     // Configura textScaleFactor = 2.0 (200%)
     tester.platformDispatcher.textScaleFactorTestValue = 2.0;

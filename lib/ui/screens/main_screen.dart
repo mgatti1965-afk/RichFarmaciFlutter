@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/flags_providers.dart';
-import '../../app/profile_controller.dart';
 import '../../app/request_controller.dart';
 import '../../app/state_providers.dart';
+import '../../app/web_mode.dart';
 import '../../data/models/medication.dart';
 import '../../data/models/sent_request.dart';
 import '../../domain/request_selection.dart';
@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/help_dialog.dart';
 import '../widgets/pharmacy_cross.dart';
+import '../widgets/web_mode_banner.dart';
 import 'disclaimer_dialog.dart';
 import 'medication_editor_sheet.dart';
 import 'onboarding_dialog.dart';
@@ -223,6 +224,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
     final selection = ref.watch(requestSelectionProvider);
     final medicationsAsync = ref.watch(medicationsProvider);
     final historyAsync = ref.watch(historyProvider);
+    final isWebMode = ref.watch(isWebModeProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -301,26 +303,59 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 unselectedLabelColor: AppColors.slate600,
                 labelStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 tabs: const [
-                  Tab(icon: Icon(Icons.edit_note), text: 'Richiesta'),
-                  Tab(icon: Icon(Icons.history), text: 'Cronologia'),
+                  Tab(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.edit_note),
+                          SizedBox(height: 2),
+                          Text('Richiesta'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Tab(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.history),
+                          SizedBox(height: 2),
+                          Text('Cronologia'),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
           ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          // TAB 1: Richiesta Farmaci
-          _buildRequestTab(
-            medicationsAsync: medicationsAsync,
-            selection: selection,
-            activeProfilePresent: activeProfile != null,
-          ),
+          if (isWebMode) const WebModeBanner(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // TAB 1: Richiesta Farmaci
+                _buildRequestTab(
+                  medicationsAsync: medicationsAsync,
+                  selection: selection,
+                  activeProfilePresent: activeProfile != null,
+                ),
 
-          // TAB 2: Cronologia Richieste
-          _buildHistoryTab(historyAsync: historyAsync),
+                // TAB 2: Cronologia Richieste
+                _buildHistoryTab(historyAsync: historyAsync),
+              ],
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: _tabController.index == 0
@@ -534,7 +569,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 color: AppColors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
+                    color: Colors.black.withValues(alpha: 0.08),
                     blurRadius: 10,
                     offset: const Offset(0, -3),
                   ),
@@ -689,3 +724,4 @@ String _formatDate(DateTime dt) {
   final mm = dt.minute.toString().padLeft(2, '0');
   return '${dt.day} $m ${dt.year}, $hh:$mm';
 }
+

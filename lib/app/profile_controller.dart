@@ -8,6 +8,7 @@ import 'flags_providers.dart';
 import 'providers.dart';
 import 'reminder_sync.dart';
 import 'state_providers.dart';
+import 'web_mode.dart';
 
 /// Gestione dei profili e delle impostazioni (parte del MainViewModel Kotlin).
 class ProfileController {
@@ -49,18 +50,27 @@ class ProfileController {
   Future<Profile> saveSettings(PatientSettings settings) async {
     final profiles = _ref.read(profileRepositoryProvider);
     final clean = SettingsRules.sanitize(settings);
+    final isWebMode = _ref.read(isWebModeProvider);
+    final safeSettings = isWebMode
+        ? clean.copyWith(notificheAttive: false)
+        : clean;
+    if (isWebMode && clean.notificheAttive) {
+      _ref.read(telemetryProvider).track('web_reminder_action_blocked', params: {
+        'source': 'save_settings',
+      });
+    }
 
     final activeId = _ref.read(activeProfileIdProvider);
     final existing = activeId == null ? null : await profiles.getById(activeId);
     final profile = existing == null
-        ? Profile.fromSettings(clean)
-        : existing.withSettings(clean);
+        ? Profile.fromSettings(safeSettings)
+        : existing.withSettings(safeSettings);
 
     await profiles.save(profile);
     await _ref.read(activeProfileIdProvider.notifier).select(profile.id);
 
     final meds = _ref.read(medicationRepositoryProvider);
-    if (isSpecialCodiceFiscale(clean.pazienteCf) &&
+    if (isSpecialCodiceFiscale(safeSettings.pazienteCf) &&
         (await meds.getByProfile(profile.id)).isEmpty) {
       await meds.saveAll(defaultMedications(profile.id));
     }

@@ -4,6 +4,7 @@ import '../data/models/medication.dart';
 import '../data/models/profile.dart';
 import '../domain/notification_scheduler.dart';
 import 'providers.dart';
+import 'web_mode.dart';
 
 /// Tiene allineati i promemoria con i dati: un promemoria e' attivo solo
 /// se il profilo ha le notifiche attive, il farmaco ha il promemoria
@@ -15,6 +16,20 @@ class ReminderSync {
 
   Future<void> syncMedication(Medication med, Profile profile) async {
     final scheduler = _ref.read(reminderSchedulerProvider);
+    if (_ref.read(isWebModeProvider)) {
+      await scheduler.cancel(med);
+      final shouldBeActive = NotificationScheduler.shouldReschedule(
+        med,
+        profileNotificationsOn: profile.notificheAttive,
+      );
+      if (shouldBeActive) {
+        _ref.read(telemetryProvider).track('web_reminder_action_blocked', params: {
+          'source': 'sync_medication',
+        });
+      }
+      return;
+    }
+
     final active = NotificationScheduler.shouldReschedule(
       med,
       profileNotificationsOn: profile.notificheAttive,

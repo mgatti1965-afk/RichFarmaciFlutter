@@ -72,8 +72,21 @@ class RequestController {
   /// [recordSent] solo se l'apertura e' riuscita.
   Future<bool> openSendApp(String message, {bool ios = false}) async {
     final uri = await buildSendUri(message, ios: ios);
-    if (uri == null) return false;
-    return _ref.read(linkOpenerProvider).open(uri);
+    if (uri == null) {
+      _ref.read(telemetryProvider).track('message_send_failed', params: {
+        'reason': 'uri_not_available',
+      });
+      return false;
+    }
+    final opened = await _ref.read(linkOpenerProvider).open(uri);
+    if (opened) {
+      _ref.read(telemetryProvider).track('message_sent_to_doctor');
+    } else {
+      _ref.read(telemetryProvider).track('message_send_failed', params: {
+        'reason': 'cannot_open_channel',
+      });
+    }
+    return opened;
   }
 
   /// Invia la richiesta in un colpo solo: compone il testo, apre l'app e,

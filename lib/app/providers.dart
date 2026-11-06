@@ -9,6 +9,7 @@ import '../data/settings_store.dart';
 import '../services/archive_file_service.dart';
 import '../services/link_opener.dart';
 import '../services/reminder_scheduler.dart';
+import '../services/telemetry.dart';
 
 /// Database e preferenze vanno forniti all'avvio dell'app (e nei test)
 /// con `overrideWithValue`: finche' non lo si fa, usarli e' un errore.
@@ -41,6 +42,11 @@ final linkOpenerProvider = Provider<LinkOpener>(
 /// Salvataggio e scelta del file di archivio. Nei test si sostituisce.
 final archiveFileServiceProvider = Provider<ArchiveFileService>(
   (ref) => const DeviceArchiveFileService(),
+);
+
+/// Telemetria minima applicativa.
+final telemetryProvider = Provider<AppTelemetry>(
+  (ref) => const DebugPrintTelemetry(),
 );
 
 final profileRepositoryProvider = Provider<ProfileRepository>(

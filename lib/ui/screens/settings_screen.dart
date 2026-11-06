@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/backup_controller.dart';
 import '../../app/medication_controller.dart';
 import '../../app/profile_controller.dart';
+import '../../app/providers.dart';
 import '../../app/state_providers.dart';
+import '../../app/web_mode.dart';
 import '../../data/models/enums.dart';
 import '../../data/models/medication.dart';
 import '../../data/models/patient_settings.dart';
@@ -12,6 +14,7 @@ import '../../domain/settings_rules.dart';
 import '../../services/archive_file_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/confirmation_dialog.dart';
+import '../widgets/web_mode_banner.dart';
 import 'medication_editor_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -39,6 +42,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   bool _isSaving = false;
   bool _isInitialized = false;
+  bool _webReminderTelemetryTracked = false;
 
   @override
   void didChangeDependencies() {
@@ -190,23 +194,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _exportBackup() async {
-    final outcome = await ref.read(backupControllerProvider).exportToFile();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            outcome == ArchiveShareOutcome.completed
-                ? 'Archivio esportato con successo!'
-                : 'Esportazione completata.',
-            style: const TextStyle(fontSize: 16),
+    final isWebMode = ref.read(isWebModeProvider);
+    try {
+      final outcome = await ref.read(backupControllerProvider).exportToFile();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              outcome == ArchiveShareOutcome.completed
+                  ? 'Archivio esportato con successo!'
+                  : 'Esportazione completata.',
+              style: const TextStyle(fontSize: 16),
+            ),
+            backgroundColor: AppColors.greenPrimary,
           ),
-          backgroundColor: AppColors.greenPrimary,
-        ),
-      );
+        );
+      }
+    } catch (_) {
+      if (isWebMode) {
+        ref.read(telemetryProvider).track('export_failed_web');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Operazione non riuscita, riprova.',
+              style: TextStyle(fontSize: 16),
+            ),
+            backgroundColor: AppColors.redDanger,
+          ),
+        );
+      }
     }
   }
 
   Future<void> _importBackup() async {
+    final isWebMode = ref.read(isWebModeProvider);
     try {
       final result = await ref.read(backupControllerProvider).importFromFile();
       if (result != null && mounted) {
@@ -223,20 +246,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         );
       }
-    } catch (e) {
+    } catch (_) {
+      if (isWebMode) {
+        ref.read(telemetryProvider).track('backup_failed_web');
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text(
-              'Errore durante l\'importazione: $e',
-              style: const TextStyle(fontSize: 16),
+              'Operazione non riuscita, riprova.',
+              style: TextStyle(fontSize: 16),
             ),
             backgroundColor: AppColors.redDanger,
-            duration: const Duration(seconds: 4),
           ),
         );
       }
     }
+  }
+
+  void _showWebReminderInfo() {
+    ref.read(telemetryProvider).track('web_reminder_action_blocked', params: {
+      'source': 'settings_reminder_section',
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Funzione disponibile nelle versioni native Android e iOS nativa.',
+          style: TextStyle(fontSize: 16),
+        ),
+        backgroundColor: AppColors.orangeAlert,
+      ),
+    );
   }
 
   void _openMedicationEditor([Medication? med]) {
@@ -253,6 +293,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final activeId = ref.watch(activeProfileIdProvider);
     final medicationsAsync = ref.watch(medicationsProvider);
     final meds = medicationsAsync.value ?? [];
+    final isWebMode = ref.watch(isWebModeProvider);
+
+    if (isWebMode && !_webReminderTelemetryTracked) {
+      _webReminderTelemetryTracked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(telemetryProvider).track('web_reminder_section_opened', params: {
+          'screen': 'settings',
+        });
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -267,6 +317,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: ListView(
             padding: const EdgeInsets.all(20.0),
             children: [
+              if (isWebMode) const WebModeBanner(),
+
               // 1. Gestione Profilo Paziente
               Card(
                 color: AppColors.blueInputBg,
@@ -296,7 +348,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       if (profiles.isNotEmpty)
                         DropdownButtonFormField<String>(
-                          value: activeId,
+                          initialValue: activeId,
                           decoration: const InputDecoration(
                             contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           ),
@@ -428,7 +480,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       SwitchListTile(
                         value: _notificheAttive,
-                        onChanged: (val) => setState(() => _notificheAttive = val),
+                        onChanged: isWebMode
+                            ? null
+                            : (val) => setState(() => _notificheAttive = val),
                         title: const Text(
                           'Promemoria Notifiche',
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -437,13 +491,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           'Abilita gli avvisi dei promemoria farmaci per questo paziente.',
                           style: TextStyle(fontSize: 15),
                         ),
-                        activeColor: AppColors.greenPrimary,
+                        activeThumbColor: AppColors.greenPrimary,
                         contentPadding: EdgeInsets.zero,
                       ),
+                      if (isWebMode) ...[
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Funzione disponibile nelle versioni native Android e iOS nativa.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.slate600,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton.icon(
+                            onPressed: _showWebReminderInfo,
+                            icon: const Icon(Icons.info_outline),
+                            label: const Text('Dettagli disponibilita'),
+                          ),
+                        ),
+                      ],
                       if (_notificheAttive) ...[
                         const SizedBox(height: 10),
                         TextField(
                           controller: _descrizioneNotifica,
+                          enabled: !isWebMode,
                           style: const TextStyle(fontSize: 16),
                           decoration: const InputDecoration(
                             labelText: 'Testo promemoria',
@@ -533,7 +608,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               else
                 for (final med in meds)
                   Card(
-                    color: med.inPausa ? AppColors.sandAlertBg.withOpacity(0.4) : AppColors.white,
+                    color: med.inPausa ? AppColors.sandAlertBg.withValues(alpha: 0.4) : AppColors.white,
                     shape: RoundedCornerShape(
                       12,
                       side: BorderSide(

@@ -7,6 +7,7 @@ import 'profile_controller.dart';
 import 'providers.dart';
 import 'reminder_sync.dart';
 import 'state_providers.dart';
+import 'web_mode.dart';
 
 /// Aggiunta, modifica, pausa ed eliminazione dei farmaci del profilo attivo.
 class MedicationController {
@@ -42,12 +43,20 @@ class MedicationController {
       }
     }
 
+    final isWebMode = _ref.read(isWebModeProvider);
+    final reminderEnabled = isWebMode ? false : notificaAttiva;
+    if (isWebMode && notificaAttiva) {
+      _ref.read(telemetryProvider).track('web_reminder_action_blocked', params: {
+        'source': 'add_medication',
+      });
+    }
+
     final med = Medication(
       profileId: profileId,
       nome: nome.trim(),
       scatole: scatole < 0 ? 0 : scatole,
       note: note.trim(),
-      notificaAttiva: notificaAttiva,
+      notificaAttiva: reminderEnabled,
       orarioNotifica: orarioNotifica,
       frequenzaValore: frequenzaValore,
       frequenzaTipo: frequenzaTipo,

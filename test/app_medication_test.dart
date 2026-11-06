@@ -24,9 +24,14 @@ void main() {
 
   tearDown(() => env.dispose());
 
-  test('senza profilo attivo non aggiunge nulla', () async {
+  test('senza profilo attivo seleziona un profilo e aggiunge il farmaco',
+      () async {
     await env.container.read(activeProfileIdProvider.notifier).select(null);
-    expect(await meds.add(nome: 'X'), isNull);
+    final created = await meds.add(nome: 'X');
+    expect(created, isNotNull);
+    expect(created!.nome, 'X');
+    expect(created.profileId, isNotEmpty);
+    expect(env.container.read(activeProfileIdProvider), isNotNull);
   });
 
   test('nome vuoto: non aggiunge nulla', () async {

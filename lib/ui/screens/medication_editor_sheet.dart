@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/medication_controller.dart';
+import '../../app/providers.dart';
+import '../../app/web_mode.dart';
 import '../../data/models/enums.dart';
 import '../../data/models/medication.dart';
 import '../../domain/notification_scheduler.dart';
@@ -38,6 +40,7 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
   late bool _inPausa;
 
   bool _isSaving = false;
+  bool _webReminderTelemetryTracked = false;
 
   @override
   void initState() {
@@ -62,6 +65,11 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
   }
 
   Future<void> _addOrEditTime([int? index]) async {
+    if (ref.read(isWebModeProvider)) {
+      _showWebReminderInfo();
+      return;
+    }
+
     final current = index != null && index < _orari.length
         ? NotificationScheduler.parseTime(_orari[index])
         : null;
@@ -97,8 +105,27 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
   }
 
   void _removeTime(int index) {
+    if (ref.read(isWebModeProvider)) {
+      _showWebReminderInfo();
+      return;
+    }
     if (_orari.length <= 1) return;
     setState(() => _orari.removeAt(index));
+  }
+
+  void _showWebReminderInfo() {
+    ref.read(telemetryProvider).track('web_reminder_action_blocked', params: {
+      'source': 'medication_editor',
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Funzione disponibile nelle versioni native Android e iOS nativa.',
+          style: TextStyle(fontSize: 16),
+        ),
+        backgroundColor: AppColors.orangeAlert,
+      ),
+    );
   }
 
   Future<void> _handleSave() async {
@@ -190,6 +217,16 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isWebMode = ref.watch(isWebModeProvider);
+    if (isWebMode && !_webReminderTelemetryTracked) {
+      _webReminderTelemetryTracked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(telemetryProvider).track('web_reminder_section_opened', params: {
+          'screen': 'medication_editor',
+        });
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -313,7 +350,9 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
                     children: [
                       SwitchListTile(
                         value: _notificaAttiva,
-                        onChanged: (val) => setState(() => _notificaAttiva = val),
+                        onChanged: isWebMode
+                            ? null
+                            : (val) => setState(() => _notificaAttiva = val),
                         title: const Text(
                           'Promemoria Notifica',
                           style: TextStyle(
@@ -328,9 +367,29 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
                               : 'Nessun promemoria impostato',
                           style: const TextStyle(fontSize: 15, color: AppColors.slate600),
                         ),
-                        activeColor: AppColors.greenPrimary,
+                        activeThumbColor: AppColors.greenPrimary,
                         contentPadding: EdgeInsets.zero,
                       ),
+                      if (isWebMode) ...[
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Funzione disponibile nelle versioni native Android e iOS nativa.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.slate600,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton.icon(
+                            onPressed: _showWebReminderInfo,
+                            icon: const Icon(Icons.info_outline),
+                            label: const Text('Dettagli disponibilita'),
+                          ),
+                        ),
+                      ],
                       if (_notificaAttiva) ...[
                         const Divider(height: 24),
                         const Text(
@@ -385,7 +444,7 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
                             Expanded(
                               flex: 2,
                               child: DropdownButtonFormField<int>(
-                                value: _frequenzaValore,
+                                initialValue: _frequenzaValore,
                                 decoration: const InputDecoration(
                                   labelText: 'Ogni',
                                   contentPadding: EdgeInsets.symmetric(
@@ -401,15 +460,18 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
                                   DropdownMenuItem(value: 12, child: Text('12')),
                                   DropdownMenuItem(value: 24, child: Text('24')),
                                 ],
-                                onChanged: (val) =>
-                                    setState(() => _frequenzaValore = val ?? 0),
+                                onChanged: isWebMode
+                                    ? null
+                                    : (val) => setState(
+                                          () => _frequenzaValore = val ?? 0,
+                                        ),
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               flex: 3,
                               child: DropdownButtonFormField<FrequencyUnit>(
-                                value: _frequenzaTipo,
+                                initialValue: _frequenzaTipo,
                                 decoration: const InputDecoration(
                                   labelText: 'Unità',
                                   contentPadding: EdgeInsets.symmetric(
@@ -425,8 +487,12 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
                                     child: Text('Giorni'),
                                   ),
                                 ],
-                                onChanged: (val) => setState(() =>
-                                    _frequenzaTipo = val ?? FrequencyUnit.ore),
+                                onChanged: isWebMode
+                                    ? null
+                                    : (val) => setState(
+                                          () => _frequenzaTipo =
+                                              val ?? FrequencyUnit.ore,
+                                        ),
                               ),
                             ),
                           ],
@@ -459,7 +525,7 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
                       'I farmaci in pausa non vengono inclusi nelle richieste e i loro promemoria sono sospesi.',
                       style: TextStyle(fontSize: 15, color: AppColors.slate600),
                     ),
-                    activeColor: AppColors.orangeAlert,
+                    activeThumbColor: AppColors.orangeAlert,
                   ),
                 ),
 

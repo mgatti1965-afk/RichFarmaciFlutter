@@ -1,0 +1,8 @@
+{
+  "dart.flutterSdkPath": "C:\\Flutter",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  }
+}
+

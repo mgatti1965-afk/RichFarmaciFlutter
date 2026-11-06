@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 /// Com'e' finita la condivisione del file di archivio.
@@ -39,12 +37,16 @@ class DeviceArchiveFileService implements ArchiveFileService {
     required String fileName,
     required String json,
   }) async {
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}${Platform.pathSeparator}$fileName');
-    await file.writeAsString(json, flush: true);
+    final bytes = utf8.encode(json);
 
     final result = await SharePlus.instance.share(ShareParams(
-      files: [XFile(file.path, mimeType: 'application/json')],
+      files: [
+        XFile.fromData(
+          bytes,
+          mimeType: 'application/json',
+          name: fileName,
+        ),
+      ],
       subject: 'Archivio RichFarmaci',
     ));
     switch (result.status) {
