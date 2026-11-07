@@ -43,6 +43,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isSaving = false;
   bool _isInitialized = false;
   bool _webReminderTelemetryTracked = false;
+  PatientSettings? _savedSettings;
+
+  void _onFieldChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _attachListeners() {
+    _pazienteNome.addListener(_onFieldChanged);
+    _pazienteCf.addListener(_onFieldChanged);
+    _medicoNome.addListener(_onFieldChanged);
+    _medicoTelefono.addListener(_onFieldChanged);
+    _medicoEmail.addListener(_onFieldChanged);
+    _secondoIndirizzo.addListener(_onFieldChanged);
+    _messaggioTesta.addListener(_onFieldChanged);
+    _messaggioCoda.addListener(_onFieldChanged);
+    _descrizioneNotifica.addListener(_onFieldChanged);
+  }
+
+  void _removeListeners() {
+    _pazienteNome.removeListener(_onFieldChanged);
+    _pazienteCf.removeListener(_onFieldChanged);
+    _medicoNome.removeListener(_onFieldChanged);
+    _medicoTelefono.removeListener(_onFieldChanged);
+    _medicoEmail.removeListener(_onFieldChanged);
+    _secondoIndirizzo.removeListener(_onFieldChanged);
+    _messaggioTesta.removeListener(_onFieldChanged);
+    _messaggioCoda.removeListener(_onFieldChanged);
+    _descrizioneNotifica.removeListener(_onFieldChanged);
+  }
 
   @override
   void didChangeDependencies() {
@@ -56,16 +85,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _loadActiveProfile() {
     final profile = ref.read(activeProfileProvider);
     final settings = profile?.toSettings() ?? const PatientSettings();
+    _savedSettings = settings;
 
-    _pazienteNome = TextEditingController(text: settings.pazienteNome);
-    _pazienteCf = TextEditingController(text: settings.pazienteCf);
-    _medicoNome = TextEditingController(text: settings.medicoNome);
-    _medicoTelefono = TextEditingController(text: settings.medicoTelefono);
-    _medicoEmail = TextEditingController(text: settings.medicoEmail);
-    _secondoIndirizzo = TextEditingController(text: settings.secondoIndirizzo);
-    _messaggioTesta = TextEditingController(text: settings.messaggioTesta);
-    _messaggioCoda = TextEditingController(text: settings.messaggioCoda);
-    _descrizioneNotifica = TextEditingController(text: settings.descrizioneNotifica);
+    if (!_isInitialized) {
+      _pazienteNome = TextEditingController(text: settings.pazienteNome);
+      _pazienteCf = TextEditingController(text: settings.pazienteCf);
+      _medicoNome = TextEditingController(text: settings.medicoNome);
+      _medicoTelefono = TextEditingController(text: settings.medicoTelefono);
+      _medicoEmail = TextEditingController(text: settings.medicoEmail);
+      _secondoIndirizzo = TextEditingController(text: settings.secondoIndirizzo);
+      _messaggioTesta = TextEditingController(text: settings.messaggioTesta);
+      _messaggioCoda = TextEditingController(text: settings.messaggioCoda);
+      _descrizioneNotifica = TextEditingController(text: settings.descrizioneNotifica);
+      _attachListeners();
+    } else {
+      _removeListeners();
+      _pazienteNome.text = settings.pazienteNome;
+      _pazienteCf.text = settings.pazienteCf;
+      _medicoNome.text = settings.medicoNome;
+      _medicoTelefono.text = settings.medicoTelefono;
+      _medicoEmail.text = settings.medicoEmail;
+      _secondoIndirizzo.text = settings.secondoIndirizzo;
+      _messaggioTesta.text = settings.messaggioTesta;
+      _messaggioCoda.text = settings.messaggioCoda;
+      _descrizioneNotifica.text = settings.descrizioneNotifica;
+      _attachListeners();
+    }
 
     _tipoInvio = settings.tipoInvio;
     _notificheAttive = settings.notificheAttive;
@@ -73,6 +118,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   void dispose() {
+    _removeListeners();
     _pazienteNome.dispose();
     _pazienteCf.dispose();
     _medicoNome.dispose();
@@ -83,6 +129,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _messaggioCoda.dispose();
     _descrizioneNotifica.dispose();
     super.dispose();
+  }
+
+  bool get _hasChanges {
+    if (_savedSettings == null) return false;
+    return _buildCurrentSettings() != _savedSettings;
   }
 
   PatientSettings _buildCurrentSettings() {
@@ -120,6 +171,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() => _isSaving = true);
     try {
       await ref.read(profileControllerProvider).saveSettings(settings);
+      _savedSettings = _buildCurrentSettings();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -549,7 +601,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onPressed: _isSaving ? null : _saveSettings,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 58),
-                  backgroundColor: AppColors.greenPrimary,
+                  backgroundColor:
+                      _hasChanges ? AppColors.redDanger : AppColors.greenPrimary,
                 ),
                 child: _isSaving
                     ? const CircularProgressIndicator(color: AppColors.white)
