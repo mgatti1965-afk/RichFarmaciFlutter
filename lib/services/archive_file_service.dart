@@ -47,7 +47,6 @@ class DeviceArchiveFileService implements ArchiveFileService {
           name: fileName,
         ),
       ],
-      subject: 'Archivio RichFarmaci',
     ));
     switch (result.status) {
       case ShareResultStatus.success:
