@@ -1,7 +1,8 @@
 {
     "name": "RichFarmaci",
     "short_name": "RichFarmaci",
-    "start_url": ".",
+    "start_url": "/RichFarmaciFlutter/",
+    "scope": "/RichFarmaciFlutter/",
     "display": "standalone",
     "background_color": "#2E3F4F",
     "theme_color": "#2E7D32",
@@ -9,6 +10,11 @@
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
+        {
+            "src": "apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        },
         {
             "src": "icons/Icon-192.png",
             "sizes": "192x192",

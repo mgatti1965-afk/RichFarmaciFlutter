@@ -3,6 +3,8 @@
 *.log
 *.pyc
 *.swp
+*.zip
+Runner.zip
 .DS_Store
 .atom/
 .build/
