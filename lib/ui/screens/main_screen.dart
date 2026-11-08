@@ -88,7 +88,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Messaggio veloce inviato!', style: TextStyle(fontSize: 16)),
+                  content: Text('Messaggio inviato. Verificarne la consegna!', style: TextStyle(fontSize: 16)),
                   backgroundColor: AppColors.greenPrimary,
                 ),
               );
@@ -132,7 +132,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
     if (sent != null && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Richiesta inviata e registrata nello storico!', style: TextStyle(fontSize: 16)),
+          content: Text('Richiesta inviata. Verificarne la consegna al medico!', style: TextStyle(fontSize: 16)),
           backgroundColor: AppColors.greenPrimary,
           duration: Duration(seconds: 4),
         ),
