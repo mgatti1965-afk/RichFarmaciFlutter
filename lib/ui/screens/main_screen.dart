@@ -74,33 +74,32 @@ class _MainScreenState extends ConsumerState<MainScreen>
     );
   }
 
-  void _openQuickMessage() {
-    showDialog(
+  Future<void> _openQuickMessage() async {
+    final customText = await showDialog<String>(
       context: context,
-      builder: (_) => QuickMessageDialog(
-        onSend: (customText) async {
-          final requestCtrl = ref.read(requestControllerProvider);
-          final message = await requestCtrl.buildQuickMessage(customText);
-          if (message == null) return;
-          final opened = await requestCtrl.openSendApp(message);
-          if (opened) {
-            await requestCtrl.recordSent(message);
-            if (mounted) {
-              _showSentConfirmationDialog(context);
-            }
-          } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Impossibile aprire l\'applicazione per l\'invio.', style: TextStyle(fontSize: 16)),
-                  backgroundColor: AppColors.redDanger,
-                ),
-              );
-            }
-          }
-        },
-      ),
+      builder: (_) => const QuickMessageDialog(),
     );
+    if (customText == null || customText.trim().isEmpty) return;
+
+    final requestCtrl = ref.read(requestControllerProvider);
+    final message = await requestCtrl.buildQuickMessage(customText);
+    if (message == null) return;
+    final opened = await requestCtrl.openSendApp(message);
+    if (opened) {
+      await requestCtrl.recordSent(message);
+      if (mounted) {
+        _showSentConfirmationDialog(context);
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossibile aprire l\'applicazione per l\'invio.', style: TextStyle(fontSize: 16)),
+            backgroundColor: AppColors.redDanger,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _sendRequest() async {

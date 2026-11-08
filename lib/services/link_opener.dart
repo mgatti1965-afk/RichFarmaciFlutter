@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Apre un link in un'altra app (WhatsApp, Messaggi, posta).
@@ -15,6 +16,15 @@ class UrlLauncherOpener implements LinkOpener {
     final uri = Uri.tryParse(url);
     if (uri == null) return false;
     try {
+      if (kIsWeb) {
+        // Su Web (Safari / iOS PWA / Chrome) i link verso app esterne
+        // devono usare '_self' per non aprire schede vuote che Safari blocca.
+        return await launchUrl(
+          uri,
+          mode: LaunchMode.platformDefault,
+          webOnlyWindowName: '_self',
+        );
+      }
       return await launchUrl(uri, mode: LaunchMode.externalApplication);
     } on Exception {
       return false;

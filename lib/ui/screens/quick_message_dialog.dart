@@ -4,10 +4,11 @@ import '../theme/app_theme.dart';
 class QuickMessageDialog extends StatefulWidget {
   const QuickMessageDialog({
     super.key,
-    required this.onSend,
+    this.onSend,
   });
 
-  final Future<void> Function(String text) onSend;
+  /// Callback opzionale: se fornita viene invocata dopo la chiusura del dialogo.
+  final Future<void> Function(String text)? onSend;
 
   @override
   State<QuickMessageDialog> createState() => _QuickMessageDialogState();
@@ -15,7 +16,6 @@ class QuickMessageDialog extends StatefulWidget {
 
 class _QuickMessageDialogState extends State<QuickMessageDialog> {
   final _controller = TextEditingController();
-  bool _isSending = false;
 
   @override
   void dispose() {
@@ -23,17 +23,14 @@ class _QuickMessageDialogState extends State<QuickMessageDialog> {
     super.dispose();
   }
 
-  Future<void> _handleSend() async {
+  void _handleSend() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
-    setState(() => _isSending = true);
-    try {
-      await widget.onSend(text);
-      if (mounted) Navigator.of(context).pop();
-    } finally {
-      if (mounted) setState(() => _isSending = false);
-    }
+    // Chiudi subito questo dialogo restituendo il testo per evitare collisioni
+    // di navigazione con il popup di conferma ("Messaggio Inviato").
+    Navigator.of(context).pop(text);
+    widget.onSend?.call(text);
   }
 
   @override
@@ -87,21 +84,13 @@ class _QuickMessageDialogState extends State<QuickMessageDialog> {
       actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       actions: [
         OutlinedButton(
-          onPressed: _isSending ? null : () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context).pop(),
           child: const Text('Annulla'),
         ),
         const SizedBox(width: 12),
         ElevatedButton(
-          onPressed: _controller.text.trim().isEmpty || _isSending
-              ? null
-              : _handleSend,
-          child: _isSending
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
-                )
-              : const Text('INVIA'),
+          onPressed: _controller.text.trim().isEmpty ? null : _handleSend,
+          child: const Text('INVIA'),
         ),
       ],
     );
