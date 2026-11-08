@@ -10,6 +10,29 @@ class SettingsRules {
       .replaceAll(RegExp(r'\s'), '')
       .replaceAll(RegExp(r'[^+0-9]'), '');
 
+  /// Verifica se la sintassi del numero di telefono è valida.
+  /// Accetta solo cifre, spazi, trattini, punti e facoltativamente un '+' iniziale.
+  /// Deve contenere tra 7 e 15 cifre.
+  static bool isValidPhone(String phone) {
+    final trimmed = phone.trim();
+    if (trimmed.isEmpty) return false;
+    if (!RegExp(r'^\+?[0-9\s\-.]+$').hasMatch(trimmed)) {
+      return false;
+    }
+    final digits = trimmed.replaceAll(RegExp(r'\D'), '');
+    return digits.length >= 7 && digits.length <= 15;
+  }
+
+  /// Verifica se la sintassi dell'indirizzo email è valida.
+  static bool isValidEmail(String email) {
+    final trimmed = email.trim();
+    if (trimmed.isEmpty) return false;
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$',
+    );
+    return emailRegex.hasMatch(trimmed);
+  }
+
   /// Dati pronti da salvare: testi senza spazi ai bordi, codice fiscale
   /// in maiuscolo, telefono pulito.
   static PatientSettings sanitize(PatientSettings s) => PatientSettings(

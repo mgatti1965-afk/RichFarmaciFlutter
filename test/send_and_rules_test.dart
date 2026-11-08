@@ -17,6 +17,24 @@ void main() {
       expect(SendUriBuilder.whatsapp('1', 'a\n\nb'), endsWith('text=a%0A%0Ab'));
     });
 
+    test('WhatsApp su iOS usa whatsapp://send', () {
+      expect(
+        SendUriBuilder.whatsapp('+393286449326', 'Messaggio', ios: true),
+        'whatsapp://send?phone=393286449326&text=Messaggio',
+      );
+    });
+
+    test('WhatsApp auto-aggiunge prefisso 39 a cellulare italiano senza prefisso', () {
+      expect(
+        SendUriBuilder.whatsapp('3286449326', 'Test'),
+        'https://api.whatsapp.com/send?phone=393286449326&text=Test',
+      );
+      expect(
+        SendUriBuilder.whatsapp('3286449326', 'Test', ios: true),
+        'whatsapp://send?phone=393286449326&text=Test',
+      );
+    });
+
     test('SMS Android e iOS', () {
       expect(SendUriBuilder.sms('+393331', 'Ciao a te'),
           'sms:+393331?body=Ciao%20a%20te');
@@ -56,6 +74,29 @@ void main() {
     test('cleanPhone', () {
       expect(SettingsRules.cleanPhone('+39 (333) 123-456'), '+39333123456');
       expect(SettingsRules.cleanPhone(' 06 12.34 '), '061234');
+    });
+
+    test('isValidPhone', () {
+      expect(SettingsRules.isValidPhone('+393286449326'), isTrue);
+      expect(SettingsRules.isValidPhone('3286449326'), isTrue);
+      expect(SettingsRules.isValidPhone('+39 328 644 9326'), isTrue);
+      expect(SettingsRules.isValidPhone('06 1234567'), isTrue);
+      expect(SettingsRules.isValidPhone('328-644-9326'), isTrue);
+      expect(SettingsRules.isValidPhone(''), isFalse);
+      expect(SettingsRules.isValidPhone('123'), isFalse);
+      expect(SettingsRules.isValidPhone('abc#@123'), isFalse);
+      expect(SettingsRules.isValidPhone('+393286449326abc'), isFalse);
+      expect(SettingsRules.isValidPhone('328?6449326'), isFalse);
+    });
+
+    test('isValidEmail', () {
+      expect(SettingsRules.isValidEmail('dottore@email.it'), isTrue);
+      expect(SettingsRules.isValidEmail('dott.bianchi@studio-medico.com'), isTrue);
+      expect(SettingsRules.isValidEmail(''), isFalse);
+      expect(SettingsRules.isValidEmail('dottore'), isFalse);
+      expect(SettingsRules.isValidEmail('dottore@'), isFalse);
+      expect(SettingsRules.isValidEmail('dottore@email'), isFalse);
+      expect(SettingsRules.isValidEmail('dottore email@it'), isFalse);
     });
 
     test('sanitize: trim, codice fiscale maiuscolo, telefono pulito', () {

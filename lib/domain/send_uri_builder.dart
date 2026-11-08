@@ -8,11 +8,32 @@ import '../data/models/patient_settings.dart';
 class SendUriBuilder {
   const SendUriBuilder._();
 
-  /// WhatsApp: numero senza "+" e senza spazi, come nell'app Kotlin.
-  static String whatsapp(String phone, String message) {
-    final clean = phone.replaceAll('+', '').replaceAll(' ', '');
-    return 'https://api.whatsapp.com/send?phone=$clean'
-        '&text=${Uri.encodeComponent(message)}';
+  /// Formatta il numero per WhatsApp, garantendo il prefisso 39 per i numeri
+  /// cellulari italiani se mancante.
+  static String formatWhatsappPhone(String phone) {
+    var clean = phone
+        .replaceAll('+', '')
+        .replaceAll(' ', '')
+        .replaceAll(RegExp(r'[^\d]'), '');
+    if (clean.startsWith('0039')) {
+      clean = clean.substring(2);
+    } else if (!clean.startsWith('39') &&
+        clean.startsWith('3') &&
+        (clean.length == 9 || clean.length == 10)) {
+      clean = '39$clean';
+    }
+    return clean;
+  }
+
+  /// WhatsApp: su iOS usa whatsapp://send per aprire direttamente l'app WhatsApp
+  /// senza passare per il browser; su desktop usa https://api.whatsapp.com/send.
+  static String whatsapp(String phone, String message, {bool ios = false}) {
+    final clean = formatWhatsappPhone(phone);
+    final encoded = Uri.encodeComponent(message);
+    if (ios) {
+      return 'whatsapp://send?phone=$clean&text=$encoded';
+    }
+    return 'https://api.whatsapp.com/send?phone=$clean&text=$encoded';
   }
 
   /// SMS. Con [ios] true il testo e' preceduto da "&" invece di "?":
@@ -38,7 +59,7 @@ class SendUriBuilder {
   }) {
     switch (settings.tipoInvio) {
       case SendChannel.whatsapp:
-        return whatsapp(settings.medicoTelefono, message);
+        return whatsapp(settings.medicoTelefono, message, ios: ios);
       case SendChannel.sms:
         return sms(settings.medicoTelefono, message, ios: ios);
       case SendChannel.email:

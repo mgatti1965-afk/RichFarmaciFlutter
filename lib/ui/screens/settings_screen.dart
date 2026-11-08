@@ -152,6 +152,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  String? get _telefonoErrorText {
+    final text = _medicoTelefono.text.trim();
+    if (text.isEmpty) return null;
+    if (!SettingsRules.isValidPhone(text)) {
+      return 'Numero non valido. Usa solo cifre (es: +39 333 1234567)';
+    }
+    return null;
+  }
+
+  String? get _emailErrorText {
+    final text = _medicoEmail.text.trim();
+    if (text.isEmpty) return null;
+    if (!SettingsRules.isValidEmail(text)) {
+      return 'Email non valida (es: dottore@email.it)';
+    }
+    return null;
+  }
+
   Future<void> _saveSettings() async {
     final settings = _buildCurrentSettings();
     if (!SettingsRules.isComplete(settings)) {
@@ -159,6 +177,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SnackBar(
           content: Text(
             'Compila Nome Paziente, Codice Fiscale, Medico e il recapito del canale scelto (Telefono o Email).',
+            style: TextStyle(fontSize: 16),
+          ),
+          backgroundColor: AppColors.redDanger,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
+    if (settings.medicoTelefono.trim().isNotEmpty &&
+        !SettingsRules.isValidPhone(settings.medicoTelefono)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Numero di telefono del medico non valido. Usa solo cifre (es: +39 333 1234567).',
+            style: TextStyle(fontSize: 16),
+          ),
+          backgroundColor: AppColors.redDanger,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
+    if (settings.medicoEmail.trim().isNotEmpty &&
+        !SettingsRules.isValidEmail(settings.medicoEmail)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Indirizzo email del medico non valido (es: dottore@email.it).',
             style: TextStyle(fontSize: 16),
           ),
           backgroundColor: AppColors.redDanger,
@@ -497,9 +545,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 controller: _medicoTelefono,
                 keyboardType: TextInputType.phone,
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Telefono Medico (per WhatsApp o SMS)',
                   hintText: 'Es: 3331234567',
+                  errorText: _telefonoErrorText,
                 ),
               ),
               const SizedBox(height: 14),
@@ -507,9 +556,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 controller: _medicoEmail,
                 keyboardType: TextInputType.emailAddress,
                 style: const TextStyle(fontSize: 18),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Email Medico (per Email)',
                   hintText: 'Es: dottore@email.it',
+                  errorText: _emailErrorText,
                 ),
               ),
               const SizedBox(height: 14),

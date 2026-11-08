@@ -86,12 +86,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
           if (opened) {
             await requestCtrl.recordSent(message);
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Messaggio inviato. Verificarne la consegna!', style: TextStyle(fontSize: 16)),
-                  backgroundColor: AppColors.greenPrimary,
-                ),
-              );
+              _showSentConfirmationDialog(context);
             }
           } else {
             if (mounted) {
@@ -130,13 +125,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
     final sent = await ref.read(requestControllerProvider).sendRequest();
     if (sent != null && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Richiesta inviata. Verificarne la consegna al medico!', style: TextStyle(fontSize: 16)),
-          backgroundColor: AppColors.greenPrimary,
-          duration: Duration(seconds: 4),
-        ),
-      );
+      _showSentConfirmationDialog(context);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -145,6 +134,50 @@ class _MainScreenState extends ConsumerState<MainScreen>
         ),
       );
     }
+  }
+
+  void _showSentConfirmationDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: AppColors.greenPrimary, size: 28),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Messaggio Inviato',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.slate900,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          "Verificane l'effettiva consegna.",
+          style: TextStyle(
+            fontSize: 17,
+            color: AppColors.slate900,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(120, 56),
+              backgroundColor: AppColors.greenPrimary,
+              foregroundColor: AppColors.white,
+            ),
+            child: const Text('Ho capito', style: TextStyle(fontSize: 18)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _viewRequestDetails(SentRequest request) {
