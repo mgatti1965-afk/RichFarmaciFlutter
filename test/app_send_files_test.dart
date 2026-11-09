@@ -66,11 +66,11 @@ void main() {
   });
 
   group('archivio su file', () {
-    test('esporta: nome con la data e contenuto dell\'archivio', () async {
+    test('esporta: nome fisso e contenuto dell\'archivio', () async {
       final outcome =
           await env.container.read(backupControllerProvider).exportToFile();
       expect(outcome, ArchiveShareOutcome.completed);
-      expect(env.files.sharedName, 'RichFarmaci_Archivio_2026-06-15.json');
+      expect(env.files.sharedName, 'RichFarmaci_Configurazione.json');
       expect(env.files.sharedJson, contains('"version": 2'));
       expect(env.files.sharedJson, contains('RSSMRA40A01H501Z'));
     });

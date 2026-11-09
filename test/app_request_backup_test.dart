@@ -75,9 +75,9 @@ void main() {
   });
 
   group('archivio', () {
-    test('nome file suggerito con la data', () {
+    test('nome file configurazione fisso e univoco', () {
       expect(env.container.read(backupControllerProvider).suggestedFileName(),
-          'RichFarmaci_Archivio_2026-06-15.json');
+          'RichFarmaci_Configurazione.json');
     });
 
     test('ripristino del backup Kotlin: profilo attivo, preferenze e promemoria',

@@ -17,12 +17,9 @@ class BackupController {
   /// Testo dell'archivio, pronto da salvare in un file.
   Future<String> exportJson() => _ref.read(backupServiceProvider).exportToJson();
 
-  /// Nome suggerito per il file, es. "RichFarmaci_Archivio_2026-10-29.json".
-  String suggestedFileName() {
-    final d = _ref.read(clockProvider)();
-    String two(int n) => n.toString().padLeft(2, '0');
-    return 'RichFarmaci_Archivio_${d.year}-${two(d.month)}-${two(d.day)}.json';
-  }
+  /// Nome fisso per il file di configurazione/archivio per evitare duplicati
+  /// e consentire a iOS/sistema operativo la richiesta di sovrascrittura.
+  String suggestedFileName() => 'RichFarmaci_Configurazione.json';
 
   /// "Esporta": crea il file e apre il menu Salva/Condividi.
   Future<ArchiveShareOutcome> exportToFile() async {
