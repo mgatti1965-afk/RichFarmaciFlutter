@@ -328,6 +328,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _importBackup() async {
+    final confirmed = await showConfirmDeleteDialog(
+      context: context,
+      title: 'Importa Configurazione',
+      message:
+          'I dati attuali (pazienti, farmaci e storico) verranno sostituiti con quelli dell\'archivio.\n\nVuoi procedere?',
+      confirmLabel: 'Sì, procedi',
+      cancelLabel: 'No, annulla',
+      isDanger: true,
+    );
+    if (!confirmed) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Operazione annullata.', style: TextStyle(fontSize: 16)),
+            backgroundColor: AppColors.slate900,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
     final isWebMode = ref.read(isWebModeProvider);
     try {
       final result = await ref.read(backupControllerProvider).importFromFile();

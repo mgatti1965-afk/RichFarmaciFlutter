@@ -278,6 +278,9 @@ void main() {
           scrollable: find.byType(Scrollable).first,
         );
         await tester.tap(find.text('Importa'));
+        await tester.pumpAndSettle();
+        // Conferma nel dialogo di avviso sovrascrittura
+        await tester.tap(find.text('Sì, procedi'));
         await tester.runAsync(() async {
           await Future<void>.delayed(const Duration(milliseconds: 100));
         });
