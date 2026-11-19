@@ -28,7 +28,6 @@ class MainScreen extends ConsumerStatefulWidget {
 class _MainScreenState extends ConsumerState<MainScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  bool _hasAutoNavigatedToSettings = false;
 
   @override
   void initState() {
@@ -258,17 +257,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
       );
     }
 
-    final activeProfile = ref.watch(activeProfileProvider);
     final profilesAsync = ref.watch(profilesProvider);
-    final profiles = profilesAsync.value ?? [];
-    if (profilesAsync.hasValue && profiles.isEmpty && !_hasAutoNavigatedToSettings) {
-      _hasAutoNavigatedToSettings = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _openSettings();
-        }
-      });
+    if (!profilesAsync.hasValue) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
+
+    final profiles = profilesAsync.value!;
+    final activeProfile = ref.watch(activeProfileProvider);
+    if (profiles.isEmpty || activeProfile == null) {
+      return const SettingsScreen();
+    }
+
     final selection = ref.watch(requestSelectionProvider);
     final medicationsAsync = ref.watch(medicationsProvider);
     final historyAsync = ref.watch(historyProvider);
@@ -332,9 +333,9 @@ class _MainScreenState extends ConsumerState<MainScreen>
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          activeProfile?.pazienteNome.isNotEmpty == true
-                              ? 'Paziente: ${activeProfile!.pazienteNome}'
-                              : (profiles.isEmpty ? 'Nessun paziente configurato' : 'Seleziona paziente'),
+                          activeProfile.pazienteNome.isNotEmpty
+                              ? 'Paziente: ${activeProfile.pazienteNome}'
+                              : 'Seleziona paziente',
                           style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
@@ -399,7 +400,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
           _buildRequestTab(
             medicationsAsync: medicationsAsync,
             selection: selection,
-            activeProfilePresent: activeProfile != null,
           ),
 
           // TAB 2: Cronologia Richieste
@@ -415,37 +415,11 @@ class _MainScreenState extends ConsumerState<MainScreen>
   Widget _buildRequestTab({
     required AsyncValue<List<Medication>> medicationsAsync,
     required RequestSelection selection,
-    required bool activeProfilePresent,
   }) {
     return medicationsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Errore: $e')),
       data: (meds) {
-        if (!activeProfilePresent) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.person_outline, size: 64, color: AppColors.slate600),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Nessun paziente configurato.',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: _openSettings,
-                    icon: const Icon(Icons.settings),
-                    label: const Text('CONFIGURA ORA'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
         final activeMeds = meds.where((m) => !m.inPausa).toList();
         final selectedCount = selection.count;
 
