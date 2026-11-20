@@ -331,7 +331,27 @@ class _MedicationEditorSheetState extends ConsumerState<MedicationEditorSheet> {
                         value: _notificaAttiva,
                         onChanged: isWebMode
                             ? null
-                            : (val) => setState(() => _notificaAttiva = val),
+                            : (val) async {
+                                if (val) {
+                                  final granted = await ref
+                                      .read(reminderSchedulerProvider)
+                                      .requestPermissions();
+                                  if (!context.mounted) return;
+                                  if (!granted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Permesso notifiche negato. Abilitalo dalle impostazioni del telefono per ricevere i promemoria.',
+                                          style: TextStyle(fontSize: 15),
+                                        ),
+                                        backgroundColor: AppColors.redDanger,
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                }
+                                setState(() => _notificaAttiva = val);
+                              },
                         title: const Text(
                           'Promemoria Notifica',
                           style: TextStyle(

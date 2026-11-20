@@ -55,6 +55,13 @@ void main() {
 
   testWidgets('Mostra Onboarding e poi schermata principale', (tester) async {
     env.container.read(disclaimerAcceptedProvider.notifier).set(true);
+    await tester.runAsync(() async {
+      final p = await env.container
+          .read(profileControllerProvider)
+          .saveSettings(validSettings());
+      await env.container.read(activeProfileIdProvider.notifier).select(p.id);
+      await env.settle();
+    });
 
     await tester.pumpWidget(buildTestApp());
     await tester.pump();

@@ -626,7 +626,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         value: _notificheAttive,
                         onChanged: isWebMode
                             ? null
-                            : (val) => setState(() => _notificheAttive = val),
+                            : (val) async {
+                                if (val) {
+                                  final granted = await ref
+                                      .read(reminderSchedulerProvider)
+                                      .requestPermissions();
+                                  if (!context.mounted) return;
+                                  if (!granted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Permesso notifiche negato. Abilitalo dalle impostazioni del telefono per ricevere i promemoria.',
+                                          style: TextStyle(fontSize: 15),
+                                        ),
+                                        backgroundColor: AppColors.redDanger,
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                }
+                                setState(() => _notificheAttive = val);
+                              },
                         title: const Text(
                           'Promemoria Notifiche',
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -660,6 +680,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             hintText: 'È ora di prendere il farmaco',
                           ),
                         ),
+                        if (!isWebMode) ...[
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final scheduler =
+                                    ref.read(reminderSchedulerProvider);
+                                final granted =
+                                    await scheduler.requestPermissions();
+                                if (!context.mounted) return;
+                                if (!granted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Permesso notifiche negato. Abilitalo dalle impostazioni del telefono.',
+                                        style: TextStyle(fontSize: 15),
+                                      ),
+                                      backgroundColor: AppColors.redDanger,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                await scheduler.showTestNotification();
+                              },
+                              icon: const Icon(Icons.notifications_active),
+                              label: const Text(
+                                'PROVA NOTIFICA',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ],
                   ),
