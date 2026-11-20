@@ -28,6 +28,7 @@ class MainScreen extends ConsumerStatefulWidget {
 class _MainScreenState extends ConsumerState<MainScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  bool _isSettingsOpen = false;
 
   @override
   void initState() {
@@ -48,10 +49,18 @@ class _MainScreenState extends ConsumerState<MainScreen>
     );
   }
 
-  void _openSettings() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-    );
+  Future<void> _openSettings() async {
+    if (_isSettingsOpen) return;
+    _isSettingsOpen = true;
+    try {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+      );
+    } finally {
+      if (mounted) {
+        _isSettingsOpen = false;
+      }
+    }
   }
 
   void _openHelp() {
@@ -267,7 +276,16 @@ class _MainScreenState extends ConsumerState<MainScreen>
     final profiles = profilesAsync.value!;
     final activeProfile = ref.watch(activeProfileProvider);
     if (profiles.isEmpty || activeProfile == null) {
-      return const SettingsScreen();
+      if (!_isSettingsOpen) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _isSettingsOpen) return;
+          if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
+          _openSettings();
+        });
+      }
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
     final selection = ref.watch(requestSelectionProvider);

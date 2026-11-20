@@ -73,23 +73,47 @@ class _DonationDialogState extends ConsumerState<DonationDialog> {
             ),
           ],
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => setState(() => _showPasswordInput = false),
-            child: const Text('ANNULLA'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (_passwordController.text.trim() == 'Nidama01') {
-                setState(() {
-                  _isTestMode = true;
-                  _showPasswordInput = false;
-                });
-              } else {
-                setState(() => _passwordError = true);
-              }
-            },
-            child: const Text('ENTRA'),
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => setState(() => _showPasswordInput = false),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size(0, 56),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  ),
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('ANNULLA'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_passwordController.text.trim() == 'Nidama01') {
+                      setState(() {
+                        _isTestMode = true;
+                        _showPasswordInput = false;
+                      });
+                    } else {
+                      setState(() => _passwordError = true);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, 56),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                  ),
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('ENTRA'),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       );
@@ -141,23 +165,46 @@ class _DonationDialogState extends ConsumerState<DonationDialog> {
           ),
         ],
       ),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(isBlocked ? 'CHIUDI' : 'ANNULLA'),
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(0, 56),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(isBlocked ? 'CHIUDI' : 'ANNULLA'),
+                ),
+              ),
+            ),
+            if (!isBlocked) ...[
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, 56),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                    backgroundColor: AppColors.greenPrimary,
+                    foregroundColor: AppColors.white,
+                  ),
+                  onPressed: () => _launchPayPal(_isTestMode),
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'SOSTIENI',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
-        if (!isBlocked)
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.greenPrimary,
-              foregroundColor: AppColors.white,
-            ),
-            onPressed: () => _launchPayPal(_isTestMode),
-            child: const Text(
-              'SOSTIENI',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
       ],
     );
   }

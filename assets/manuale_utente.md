@@ -105,8 +105,8 @@ Nelle versioni native Android e iOS, puoi impostare promemoria giornalieri per r
 
 ## 9. Archivio di Sicurezza (Backup e Ripristino)
 In fondo alla schermata **Configurazione** trovi la sezione **Archivio Dati**:
-- **Esporta Archivio**: Salva o condividi una copia di sicurezza di tutti i dati (pazienti, farmaci, cronologia) in un file JSON protetto.
-- **Importa Archivio**: Ripristina tutti i dati da un file di archivio precedentemente esportato (utile in caso di cambio smartphone).
+- **Salva**: Salva una copia di sicurezza di tutti i dati (pazienti, farmaci, cronologia) in un file JSON nella cartella scelta (es. Download).
+- **Importa**: Ripristina tutti i dati da un file di archivio precedentemente salvato (utile in caso di cambio smartphone).
 
 ---
 

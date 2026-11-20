@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. Android - Release Leggero",
+      "type": "shell",
+      "command": "flutter build apk --release --split-per-abi; if ($?) { Remove-Item -Force -ErrorAction SilentlyContinue build\\app\\outputs\\flutter-apk\\app-*.apk, build\\app\\outputs\\flutter-apk\\*.sha1 }",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "2. Android - Release Completo",
+      "type": "shell",
+      "command": "flutter build apk --release; if ($?) { Remove-Item -Force -ErrorAction SilentlyContinue build\\app\\outputs\\flutter-apk\\app-*.apk, build\\app\\outputs\\flutter-apk\\*.sha1 }",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}

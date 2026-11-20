@@ -7,6 +7,7 @@ import '../data/repositories/profile_repository.dart';
 import '../data/repositories/sent_request_repository.dart';
 import '../data/settings_store.dart';
 import '../services/archive_file_service.dart';
+import '../services/contact_picker_service.dart';
 import '../services/link_opener.dart';
 import '../services/reminder_scheduler.dart';
 import '../services/telemetry.dart';
@@ -42,6 +43,11 @@ final linkOpenerProvider = Provider<LinkOpener>(
 /// Salvataggio e scelta del file di archivio. Nei test si sostituisce.
 final archiveFileServiceProvider = Provider<ArchiveFileService>(
   (ref) => const DeviceArchiveFileService(),
+);
+
+/// Scelta di un contatto dalla rubrica del telefono. Nei test si sostituisce.
+final contactPickerServiceProvider = Provider<ContactPickerService>(
+  (ref) => const DeviceContactPickerService(),
 );
 
 /// Telemetria minima applicativa.

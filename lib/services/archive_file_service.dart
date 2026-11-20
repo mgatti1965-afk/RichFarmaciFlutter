@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:share_plus/share_plus.dart';
 
 /// Com'e' finita la condivisione del file di archivio.
 enum ArchiveShareOutcome {
@@ -37,25 +37,17 @@ class DeviceArchiveFileService implements ArchiveFileService {
     required String fileName,
     required String json,
   }) async {
-    final bytes = utf8.encode(json);
+    final bytes = Uint8List.fromList(utf8.encode(json));
 
-    final result = await SharePlus.instance.share(ShareParams(
-      files: [
-        XFile.fromData(
-          bytes,
-          mimeType: 'application/json',
-          name: fileName,
-        ),
-      ],
-    ));
-    switch (result.status) {
-      case ShareResultStatus.success:
-        return ArchiveShareOutcome.completed;
-      case ShareResultStatus.dismissed:
-        return ArchiveShareOutcome.dismissed;
-      case ShareResultStatus.unavailable:
-        return ArchiveShareOutcome.unknown;
-    }
+    final savedUri = await FilePicker.saveFile(
+      dialogTitle: 'Salva configurazione',
+      fileName: fileName,
+      bytes: bytes,
+      mimeType: 'application/json',
+    );
+    return savedUri != null
+        ? ArchiveShareOutcome.completed
+        : ArchiveShareOutcome.dismissed;
   }
 
   @override

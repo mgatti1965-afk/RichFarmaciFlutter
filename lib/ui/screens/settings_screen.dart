@@ -12,6 +12,7 @@ import '../../data/models/medication.dart';
 import '../../data/models/patient_settings.dart';
 import '../../domain/settings_rules.dart';
 import '../../services/archive_file_service.dart';
+import '../../services/contact_picker_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/help_dialog.dart';
@@ -245,14 +246,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           textCapitalization: TextCapitalization.words,
           decoration: const InputDecoration(labelText: 'Nome e Cognome'),
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          OutlinedButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Annulla'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Crea'),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 56),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                  ),
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Annulla'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(0, 56),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                  ),
+                  child: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Crea'),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -297,17 +322,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     try {
       final outcome = await ref.read(backupControllerProvider).exportToFile();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              outcome == ArchiveShareOutcome.completed
-                  ? 'Archivio esportato con successo!'
-                  : 'Esportazione completata.',
-              style: const TextStyle(fontSize: 16),
+        if (outcome == ArchiveShareOutcome.dismissed) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Salvataggio annullato.', style: TextStyle(fontSize: 16)),
+              backgroundColor: AppColors.slate900,
+              duration: Duration(seconds: 3),
             ),
-            backgroundColor: AppColors.greenPrimary,
-          ),
-        );
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Configurazione salvata con successo!',
+                style: TextStyle(fontSize: 16),
+              ),
+              backgroundColor: AppColors.greenPrimary,
+            ),
+          );
+        }
       }
     } catch (_) {
       if (isWebMode) {
@@ -393,6 +426,64 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Future<void> _pickDoctorFromContacts() async {
+    try {
+      final picked = await ref.read(contactPickerServiceProvider).pickContact();
+      if (picked == null || !mounted) return;
+
+      setState(() {
+        if (picked.name.trim().isNotEmpty) {
+          _medicoNome.text = picked.name.trim();
+        }
+        if (picked.phone != null && picked.phone!.trim().isNotEmpty) {
+          _medicoTelefono.text = picked.phone!.trim();
+        }
+        if (picked.email != null && picked.email!.trim().isNotEmpty) {
+          _medicoEmail.text = picked.email!.trim();
+        }
+        if (picked.address != null && picked.address!.trim().isNotEmpty) {
+          _secondoIndirizzo.text = picked.address!.trim();
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Dati del medico importati dalla rubrica. Ricorda di salvare la configurazione.',
+            style: TextStyle(fontSize: 16),
+          ),
+          backgroundColor: AppColors.greenPrimary,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } on ContactPermissionDeniedException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.permanentlyDenied
+                ? 'Permesso rubrica negato. Abilitalo dalle impostazioni del telefono.'
+                : 'Permesso rubrica necessario per importare un contatto.',
+            style: const TextStyle(fontSize: 16),
+          ),
+          backgroundColor: AppColors.redDanger,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Impossibile leggere la rubrica, riprova.',
+            style: TextStyle(fontSize: 16),
+          ),
+          backgroundColor: AppColors.redDanger,
+        ),
+      );
+    }
+  }
+
   void _openHelp() {
     showDialog(
       context: context,
@@ -407,6 +498,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final profiles = ref.watch(profilesProvider).value ?? [];
     final activeId = ref.watch(activeProfileIdProvider);
+    final hasActiveProfile = profiles.isNotEmpty && activeId != null;
     final medicationsAsync = ref.watch(medicationsProvider);
     final meds = medicationsAsync.value ?? [];
     final isWebMode = ref.watch(isWebModeProvider);
@@ -420,8 +512,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       });
     }
 
-    return Scaffold(
+    return PopScope(
+      canPop: hasActiveProfile,
+      child: Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: hasActiveProfile,
         elevation: 0,
         backgroundColor: AppColors.white,
         title: const Row(
@@ -548,9 +643,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(height: 28),
 
               // 3. Dati Medico Curante
-              const Text(
-                'DATI DEL MEDICO CURANTE',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.slate900),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'DATI DEL MEDICO CURANTE',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.slate900,
+                      ),
+                    ),
+                  ),
+                  if (!isWebMode)
+                    OutlinedButton.icon(
+                      onPressed: _pickDoctorFromContacts,
+                      icon: const Icon(Icons.contacts_outlined, size: 20),
+                      label: const Text(
+                        'Dalla Rubrica',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 10),
               TextField(
@@ -941,8 +1060,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _exportBackup,
-                      icon: const Icon(Icons.share, size: 20),
-                      label: const Text('Esporta'),
+                      icon: const Icon(Icons.save_alt, size: 20),
+                      label: const Text('Salva'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -979,6 +1098,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

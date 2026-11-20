@@ -140,34 +140,52 @@ class _HelpDialogState extends State<HelpDialog> {
           children: _buildItems(),
         ),
       ),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
-        ElevatedButton.icon(
-          onPressed: _loadingManual ? null : _loadManual,
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(120, 56),
-            backgroundColor: AppColors.greenPrimary,
-            foregroundColor: AppColors.white,
-          ),
-          icon: _loadingManual
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.white,
-                  ),
-                )
-              : const Icon(Icons.menu_book, size: 20, color: AppColors.white),
-          label: const Text('Manuale', style: TextStyle(fontSize: 18)),
-        ),
-        ElevatedButton(
-          onPressed: widget.onDismiss,
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(120, 56),
-            backgroundColor: AppColors.greenPrimary,
-            foregroundColor: AppColors.white,
-          ),
-          child: const Text('Ho capito', style: TextStyle(fontSize: 18)),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: _loadingManual ? null : _loadManual,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(0, 56),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                  backgroundColor: AppColors.greenPrimary,
+                  foregroundColor: AppColors.white,
+                ),
+                icon: _loadingManual
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.white,
+                        ),
+                      )
+                    : const Icon(Icons.menu_book, size: 20, color: AppColors.white),
+                label: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('Manuale', style: TextStyle(fontSize: 18)),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: widget.onDismiss,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(0, 56),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                  backgroundColor: AppColors.greenPrimary,
+                  foregroundColor: AppColors.white,
+                ),
+                child: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('Ho capito', style: TextStyle(fontSize: 18)),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

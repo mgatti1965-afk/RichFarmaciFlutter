@@ -60,12 +60,21 @@ tasks.configureEach {
         val buildType = if (name == "assembleDebug") "debug" else "release"
         doLast {
             val apkDir = project.layout.buildDirectory.dir("outputs/apk/$buildType").get().asFile
-            val srcApk = file("$apkDir/app-$buildType.apk")
             val outDir = project.layout.buildDirectory.dir("outputs/flutter-apk").get().asFile
-            if (srcApk.exists()) {
+            if (apkDir.exists()) {
                 outDir.mkdirs()
-                val destApk = file("$outDir/gestFarmaci-$buildType.apk")
-                srcApk.copyTo(destApk, overwrite = true)
+                outDir.listFiles()
+                    ?.filter { it.isFile && it.name.startsWith("RichFarmaci-") && it.name.endsWith("-$buildType.apk") }
+                    ?.forEach { it.delete() }
+                apkDir.listFiles()
+                    ?.filter { it.isFile && it.name.startsWith("app-") && it.name.endsWith("-$buildType.apk") }
+                    ?.forEach { srcApk ->
+                        val destName = srcApk.name
+                            .replaceFirst("app-", "RichFarmaci-")
+                            .replace("-v8a-", "-")
+                            .replace("-v7a-", "-")
+                        srcApk.copyTo(file("$outDir/$destName"), overwrite = true)
+                    }
             }
         }
     }

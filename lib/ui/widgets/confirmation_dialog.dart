@@ -44,34 +44,50 @@ Future<bool> showConfirmDeleteDialog({
           height: 1.4,
         ),
       ),
-      actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
-        // Il pulsante "No, annulla" è sicuro ed evidente per l'anziano
-        OutlinedButton(
-          onPressed: () => Navigator.of(ctx).pop(false),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(120, 56),
-            side: const BorderSide(color: AppColors.slate600, width: 2),
-            foregroundColor: AppColors.slate900,
-          ),
-          child: Text(
-            cancelLabel,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Il pulsante di conferma cancellazione
-        ElevatedButton(
-          onPressed: () => Navigator.of(ctx).pop(true),
-          style: ElevatedButton.styleFrom(
-            minimumSize: const Size(120, 56),
-            backgroundColor: isDanger ? AppColors.redDanger : AppColors.greenPrimary,
-            foregroundColor: AppColors.white,
-          ),
-          child: Text(
-            confirmLabel,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+        Row(
+          children: [
+            // Il pulsante "No, annulla" è sicuro ed evidente per l'anziano
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 56),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                  side: const BorderSide(color: AppColors.slate600, width: 2),
+                  foregroundColor: AppColors.slate900,
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    cancelLabel,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            // Il pulsante di conferma cancellazione
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(0, 56),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                  backgroundColor: isDanger ? AppColors.redDanger : AppColors.greenPrimary,
+                  foregroundColor: AppColors.white,
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    confirmLabel,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     ),

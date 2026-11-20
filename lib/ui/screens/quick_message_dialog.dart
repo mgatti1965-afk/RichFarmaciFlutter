@@ -81,16 +81,38 @@ class _QuickMessageDialogState extends State<QuickMessageDialog> {
           ],
         ),
       ),
-      actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Annulla'),
-        ),
-        const SizedBox(width: 12),
-        ElevatedButton(
-          onPressed: _controller.text.trim().isEmpty ? null : _handleSend,
-          child: const Text('INVIA'),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 56),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                ),
+                child: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('Annulla'),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _controller.text.trim().isEmpty ? null : _handleSend,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(0, 56),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+                ),
+                child: const FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text('INVIA'),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

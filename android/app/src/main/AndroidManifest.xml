@@ -7,6 +7,8 @@
     <!-- Orari esatti: l'utente puo' concedere il permesso dalle impostazioni.
          Se non lo concede, i promemoria restano approssimati. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- Per importare i dati del medico curante dalla rubrica del telefono. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <application
         android:label="RichFarmaci"
         android:name="${applicationName}"
