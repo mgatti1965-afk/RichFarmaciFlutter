@@ -67,7 +67,10 @@ class FakeLinkOpener implements LinkOpener {
 class FakeArchiveFileService implements ArchiveFileService {
   String? sharedName;
   String? sharedJson;
+  String? existingText;
+  String? lastCheckedFileName;
   String? textToPick;
+  String? lastSuggestedFileName;
   bool throwOnShare = false;
   bool throwOnPick = false;
 
@@ -83,7 +86,14 @@ class FakeArchiveFileService implements ArchiveFileService {
   }
 
   @override
-  Future<String?> pickText() async {
+  Future<String?> findExistingText(String fileName) async {
+    lastCheckedFileName = fileName;
+    return existingText;
+  }
+
+  @override
+  Future<String?> pickText({String? suggestedFileName}) async {
+    lastSuggestedFileName = suggestedFileName;
     if (throwOnPick) throw Exception('Pick error');
     return textToPick;
   }

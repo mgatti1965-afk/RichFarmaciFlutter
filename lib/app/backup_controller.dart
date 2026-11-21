@@ -30,11 +30,17 @@ class BackupController {
         );
   }
 
+  /// Cerca se esiste già un file di backup leggibile con il nome predefinito.
+  Future<String?> findExistingBackupText() =>
+      _ref.read(archiveFileServiceProvider).findExistingText(suggestedFileName());
+
   /// "Importa": fa scegliere il file e lo ripristina. Restituisce null se
   /// l'utente annulla la scelta. Se il file non e' valido lancia
   /// [FormatException] con un messaggio in italiano (dati intatti).
   Future<RestoreResult?> importFromFile() async {
-    final text = await _ref.read(archiveFileServiceProvider).pickText();
+    final text = await _ref
+        .read(archiveFileServiceProvider)
+        .pickText(suggestedFileName: suggestedFileName());
     if (text == null) return null;
     return restoreJson(text);
   }

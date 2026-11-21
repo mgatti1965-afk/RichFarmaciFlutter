@@ -3,6 +3,9 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 
+import 'archive_locator_stub.dart'
+    if (dart.library.io) 'archive_locator_io.dart';
+
 /// Com'e' finita la condivisione del file di archivio.
 enum ArchiveShareOutcome {
   /// L'utente ha scelto dove salvarlo o a chi mandarlo.
@@ -24,9 +27,13 @@ abstract class ArchiveFileService {
     required String json,
   });
 
+  /// "Importa": cerca se esiste già un file di backup con nome [fileName]
+  /// in un percorso accessibile e ne restituisce il testo, altrimenti null.
+  Future<String?> findExistingText(String fileName);
+
   /// "Importa": fa scegliere un file e ne restituisce il testo.
   /// Restituisce null se l'utente annulla.
-  Future<String?> pickText();
+  Future<String?> pickText({String? suggestedFileName});
 }
 
 class DeviceArchiveFileService implements ArchiveFileService {
@@ -45,16 +52,27 @@ class DeviceArchiveFileService implements ArchiveFileService {
       bytes: bytes,
       mimeType: 'application/json',
     );
+    if (savedUri != null && savedUri.scheme == 'file') {
+      await rememberSavedArchivePath(savedUri.toFilePath());
+    }
     return savedUri != null
         ? ArchiveShareOutcome.completed
         : ArchiveShareOutcome.dismissed;
   }
 
   @override
-  Future<String?> pickText() async {
+  Future<String?> findExistingText(String fileName) =>
+      findExistingArchiveText(fileName);
+
+  @override
+  Future<String?> pickText({String? suggestedFileName}) async {
     // Nessun filtro sul tipo: alcuni telefoni nascondono i file .json
     // quando si filtra, e chi importa deve poter scegliere il suo file.
-    final file = await FilePicker.pickFile();
+    final file = await FilePicker.pickFile(
+      dialogTitle: suggestedFileName != null
+          ? 'Seleziona $suggestedFileName'
+          : null,
+    );
     if (file == null) return null;
     final bytes = await file.readAsBytes();
     final String text;

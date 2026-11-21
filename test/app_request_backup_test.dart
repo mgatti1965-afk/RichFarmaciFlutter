@@ -110,6 +110,21 @@ void main() {
       expect(json, contains('"version": 2'));
       expect(json, contains('RSSMRA40A01H501Z'));
     });
+
+    test('cerca file esistente usando il nome predefinito e propone il nome in import',
+        () async {
+      env.files.existingText = kotlinBackup;
+      env.files.textToPick = kotlinBackup;
+      final backup = env.container.read(backupControllerProvider);
+
+      final found = await backup.findExistingBackupText();
+      expect(found, kotlinBackup);
+      expect(env.files.lastCheckedFileName, 'RichFarmaci_Configurazione.json');
+
+      final result = await backup.importFromFile();
+      expect(result, isNotNull);
+      expect(env.files.lastSuggestedFileName, 'RichFarmaci_Configurazione.json');
+    });
   });
 
   group('preferenze', () {

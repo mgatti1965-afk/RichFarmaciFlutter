@@ -18,6 +18,8 @@ import '../widgets/confirmation_dialog.dart';
 import '../widgets/help_dialog.dart';
 import 'medication_editor_sheet.dart';
 
+enum _FoundBackupAction { loadFound, chooseOther, cancel }
+
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -360,18 +362,126 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  Future<void> _importBackup() async {
-    final confirmed = await showConfirmDeleteDialog(
+  Future<_FoundBackupAction> _showFoundBackupDialog() async {
+    final choice = await showDialog<_FoundBackupAction>(
       context: context,
-      title: 'Importa Configurazione',
-      message:
-          'I dati attuali (pazienti, farmaci e storico) verranno sostituiti con quelli dell\'archivio.\n\nVuoi procedere?',
-      confirmLabel: 'Sì, procedi',
-      cancelLabel: 'No, annulla',
-      isDanger: true,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: AppColors.orangeAlert,
+              size: 32,
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Importa Configurazione',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.slate900,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'È stata trovata una copia di sicurezza salvata.\n\nI dati attuali (pazienti, farmaci e storico) verranno sostituiti.\n\nVuoi caricarla?',
+          style: TextStyle(
+            fontSize: 18,
+            color: AppColors.slate900,
+            height: 1.4,
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () =>
+                          Navigator.of(ctx).pop(_FoundBackupAction.cancel),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 56),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 14),
+                        side: const BorderSide(
+                            color: AppColors.slate600, width: 2),
+                        foregroundColor: AppColors.slate900,
+                      ),
+                      child: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'No, annulla',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () =>
+                          Navigator.of(ctx).pop(_FoundBackupAction.loadFound),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(0, 56),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 14),
+                        backgroundColor: AppColors.redDanger,
+                        foregroundColor: AppColors.white,
+                      ),
+                      child: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Sì, carica',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton(
+                onPressed: () =>
+                    Navigator.of(ctx).pop(_FoundBackupAction.chooseOther),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 52),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  side: const BorderSide(color: AppColors.grayBorder, width: 1.5),
+                  foregroundColor: AppColors.slate900,
+                ),
+                child: const Text(
+                  'Scegli un altro file',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
-    if (!confirmed) {
-      if (mounted) {
+    return choice ?? _FoundBackupAction.cancel;
+  }
+
+  Future<void> _importBackup() async {
+    final backupController = ref.read(backupControllerProvider);
+    final existingText = await backupController.findExistingBackupText();
+    if (!mounted) return;
+
+    bool loadDirect = false;
+    if (existingText != null) {
+      final action = await _showFoundBackupDialog();
+      if (!mounted) return;
+      if (action == _FoundBackupAction.cancel) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Operazione annullata.', style: TextStyle(fontSize: 16)),
@@ -379,13 +489,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             duration: Duration(seconds: 3),
           ),
         );
+        return;
       }
-      return;
+      loadDirect = action == _FoundBackupAction.loadFound;
+    } else {
+      final fileName = backupController.suggestedFileName();
+      final confirmed = await showConfirmDeleteDialog(
+        context: context,
+        title: 'Importa Configurazione',
+        message:
+            'I dati attuali (pazienti, farmaci e storico) verranno sostituiti con quelli dell\'archivio.\n\nCerca il file:\n$fileName\n(di solito nella cartella Download).\n\nVuoi procedere?',
+        confirmLabel: 'Sì, procedi',
+        cancelLabel: 'No, annulla',
+        isDanger: true,
+      );
+      if (!confirmed) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content:
+                  Text('Operazione annullata.', style: TextStyle(fontSize: 16)),
+              backgroundColor: AppColors.slate900,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
     }
 
     final isWebMode = ref.read(isWebModeProvider);
     try {
-      final result = await ref.read(backupControllerProvider).importFromFile();
+      final result = loadDirect
+          ? await backupController.restoreJson(existingText!)
+          : await backupController.importFromFile();
       if (result != null && mounted) {
         _loadActiveProfile();
         setState(() {});
