@@ -5,143 +5,51 @@ import '../../app/flags_providers.dart';
 import '../../app/providers.dart';
 import '../theme/app_theme.dart';
 
-class DonationDialog extends ConsumerStatefulWidget {
+class DonationDialog extends ConsumerWidget {
   const DonationDialog({super.key});
 
-  @override
-  ConsumerState<DonationDialog> createState() => _DonationDialogState();
-}
+  Future<void> _launchPayPal(BuildContext context, WidgetRef ref) async {
+    final url = Uri.https(
+      'www.paypal.com',
+      '/cgi-bin/webscr',
+      {
+        'cmd': '_donations',
+        'business': 'marco.gatti65@alice.it',
+        'amount': '5.00',
+        'currency_code': 'EUR',
+        'item_name': 'Offerta Caffe RichFarmaci',
+      },
+    ).toString();
 
-class _DonationDialogState extends ConsumerState<DonationDialog> {
-  bool _isTestMode = false;
-  final TextEditingController _passwordController = TextEditingController();
-  bool _showPasswordInput = false;
-  bool _passwordError = false;
-
-  @override
-  void dispose() {
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _launchPayPal(bool isTest) async {
-    final baseUrl = isTest
-        ? 'https://www.sandbox.paypal.com/cgi-bin/webscr'
-        : 'https://www.paypal.com/cgi-bin/webscr';
-
-    final url =
-        '$baseUrl?cmd=_xclick&business=marco.gatti65@alice.it&amount=5.00&currency_code=EUR&item_name=Offerta%20Caffe%20RichFarmaci&solution_type=Sole&landing_page=Billing';
-
+    final messenger = ScaffoldMessenger.maybeOf(context);
     final opened = await ref.read(linkOpenerProvider).open(url);
-    if (opened && !isTest) {
+    if (opened) {
       await ref.read(donationCountProvider.notifier).increment();
     }
-    if (mounted) {
+    if (context.mounted) {
       Navigator.of(context).pop();
+    }
+    if (!opened) {
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Impossibile aprire la pagina di pagamento.',
+            style: TextStyle(fontSize: 16),
+          ),
+          backgroundColor: AppColors.redDanger,
+        ),
+      );
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final count = ref.watch(donationCountProvider);
     final isBlocked = count >= 2;
     final hasWarning = count == 1;
 
-    if (_showPasswordInput) {
-      return AlertDialog(
-        title: const Text('Modalità Test Sandbox'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password Sandbox',
-                errorText: _passwordError ? 'Password errata' : null,
-              ),
-              onSubmitted: (val) {
-                if (val.trim() == 'Nidama01') {
-                  setState(() {
-                    _isTestMode = true;
-                    _showPasswordInput = false;
-                  });
-                } else {
-                  setState(() => _passwordError = true);
-                }
-              },
-            ),
-          ],
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () => setState(() => _showPasswordInput = false),
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(0, 56),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                  ),
-                  child: const FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text('ANNULLA'),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_passwordController.text.trim() == 'Nidama01') {
-                      setState(() {
-                        _isTestMode = true;
-                        _showPasswordInput = false;
-                      });
-                    } else {
-                      setState(() => _passwordError = true);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(0, 56),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-                  ),
-                  child: const FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text('ENTRA'),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
-    }
-
     return AlertDialog(
-      title: GestureDetector(
-        onLongPress: () {
-          setState(() {
-            _passwordError = false;
-            _passwordController.clear();
-            _showPasswordInput = true;
-          });
-        },
-        child: Row(
-          children: [
-            Text(isBlocked ? 'Grazie di cuore! ☕' : 'Offri un caffè ☕'),
-            if (_isTestMode)
-              const Padding(
-                padding: EdgeInsets.only(left: 8.0),
-                child: Text(
-                  '(TEST)',
-                  style: TextStyle(color: Colors.red, fontSize: 14),
-                ),
-              ),
-          ],
-        ),
-      ),
+      title: Text(isBlocked ? 'Grazie di cuore! ☕' : 'Offri un caffè ☕'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,7 +100,7 @@ class _DonationDialogState extends ConsumerState<DonationDialog> {
                     backgroundColor: AppColors.greenPrimary,
                     foregroundColor: AppColors.white,
                   ),
-                  onPressed: () => _launchPayPal(_isTestMode),
+                  onPressed: () => _launchPayPal(context, ref),
                   child: const FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(

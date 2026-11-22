@@ -119,49 +119,6 @@ void main() {
     expect(find.text('SOSTIENI'), findsNothing);
   });
 
-  testWidgets('DonationDialog attiva modalità TEST sandbox su pressione prolungata',
-      (tester) async {
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: env.container,
-        child: const MaterialApp(
-          home: Scaffold(body: DonationDialog()),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    // Pressione prolungata sul titolo
-    await tester.longPress(find.text('Offri un caffè ☕'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Modalità Test Sandbox'), findsOneWidget);
-
-    // Inserisce password errata
-    await tester.enterText(find.byType(TextField), 'wrong');
-    await tester.tap(find.text('ENTRA'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Password errata'), findsOneWidget);
-
-    // Inserisce password corretta 'Nidama01'
-    await tester.enterText(find.byType(TextField), 'Nidama01');
-    await tester.tap(find.text('ENTRA'));
-    await tester.pumpAndSettle();
-
-    // Ritorna al dialogo con indicatore (TEST)
-    expect(find.text('(TEST)'), findsOneWidget);
-
-    // Clicca SOSTIENI in modalità test
-    await tester.tap(find.text('SOSTIENI'));
-    await tester.pumpAndSettle();
-
-    // Ha aperto sandbox paypal URL e non ha incrementato donationCount
-    expect(env.links.opened, hasLength(1));
-    expect(env.links.opened.first, contains('sandbox.paypal.com'));
-    expect(env.container.read(donationCountProvider), 0);
-  });
-
   testWidgets('DonationDialog lancia PayPal di produzione e incrementa contatore',
       (tester) async {
     await tester.pumpWidget(
@@ -179,9 +136,47 @@ void main() {
 
     expect(env.links.opened, hasLength(1));
     expect(env.links.opened.first, contains('www.paypal.com'));
-    expect(env.links.opened.first, contains('Offerta%20Caffe%20RichFarmaci'));
-    expect(env.links.opened.first, contains('marco.gatti65@alice.it'));
+    expect(env.links.opened.first, contains('cmd=_donations'));
+    expect(env.links.opened.first, contains('Offerta+Caffe+RichFarmaci'));
+    expect(env.links.opened.first, contains('marco.gatti65%40alice.it'));
     expect(env.container.read(donationCountProvider), 1);
+  });
+
+  testWidgets('DonationDialog mostra errore e non incrementa se apertura link fallisce',
+      (tester) async {
+    env.links.succeeds = false;
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: env.container,
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () => showDialog(
+                  context: context,
+                  builder: (_) => const DonationDialog(),
+                ),
+                child: const Text('APRI'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('APRI'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('SOSTIENI'));
+    await tester.pumpAndSettle();
+
+    expect(env.container.read(donationCountProvider), 0);
+    expect(
+      find.text('Impossibile aprire la pagina di pagamento.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Testata Configurazione ha simbolo ingranaggio e apre help "?"',

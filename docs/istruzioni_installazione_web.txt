@@ -1,0 +1,43 @@
+RICHFARMACI - ISTRUZIONI PER LA VERSIONE WEB
+=============================================
+
+La versione Web di RichFarmaci funziona direttamente dal browser (su smartphone Android, iPhone/iPad e computer) senza dover installare file .apk.
+
+
+1. APRI IL LINK NEL BROWSER
+---------------------------
+- Tocca o clicca il link di RichFarmaci che hai ricevuto.
+- Consiglio su telefono: se il link si apre dentro WhatsApp o un'altra app, tocca il menu (tre puntini o icona bussola/Safari) e scegli "Apri nel browser" (Chrome su Android, Safari su iPhone).
+
+
+2. SALVALA COME APP SULLA SCHERMATA HOME (CONSIGLIATO)
+------------------------------------------------------
+In questo modo avrai l'icona di RichFarmaci sul telefono come una normale applicazione.
+
+Su iPhone / iPad (usando Safari):
+1. Apri il link con Safari.
+2. Tocca l'icona Condividi (il quadrato con la freccia verso l'alto, in basso o in alto).
+3. Scorri il menu e tocca "Aggiungi alla schermata Home".
+4. Tocca "Aggiungi" in alto a destra.
+
+Su Android (usando Chrome):
+1. Apri il link con Google Chrome.
+2. Tocca i tre puntini in alto a destra.
+3. Tocca "Installa app" oppure "Aggiungi a schermata Home" e conferma.
+
+Su Computer (Chrome o Edge):
+- Apri il link e clicca l'icona di installazione nella barra degli indirizzi in alto a destra (oppure salvalo nei Preferiti).
+
+
+3. PRIMO AVVIO
+--------------
+1. Apri RichFarmaci dalla nuova icona creata (o dal link).
+2. Accetta l'informativa iniziale.
+3. Inserisci i tuoi dati e quelli del tuo Medico nella sezione Configurazione.
+
+
+4. COSE IMPORTANTI DA SAPERE SULLA VERSIONE WEB
+-----------------------------------------------
+- I dati restano sul dispositivo: tutto ciò che inserisci viene salvato nella memoria del browser che stai usando, non su server esterni.
+- Attenzione a non cancellare i dati del sito: se svuoti cache/dati del browser, potresti perdere la lista dei farmaci. Usa regolarmente la funzione di Backup in "Configurazione" per salvare una copia di sicurezza sul telefono o PC.
+- Promemoria: la versione Web non può inviare notifiche automatiche quando il browser è chiuso (a differenza dell'app Android).

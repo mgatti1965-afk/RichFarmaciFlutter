@@ -1,0 +1,45 @@
+RICHFARMACI - ISTRUZIONI DI INSTALLAZIONE SU ANDROID (APK)
+=========================================================
+
+Questa guida spiega passo dopo passo come installare RichFarmaci su uno smartphone o tablet Android tramite il file .apk.
+
+
+1. SCARICA IL FILE
+------------------
+- Salva o scarica sul telefono il file "RichFarmaci.apk" (ricevuto via WhatsApp, email o link).
+- Al termine del download, tocca il file per avviare l'installazione (se non lo trovi, apri l'app "File" o "Download" del telefono e cercalo lì).
+
+
+2. CONSENTI L'INSTALLAZIONE
+---------------------------
+Poiché l'app non viene scaricata dal Google Play Store, Android ti chiederà una conferma di sicurezza la prima volta:
+
+a) Se compare l'avviso "Per motivi di sicurezza, il telefono non è autorizzato a installare app sconosciute da questa origine":
+   1. Tocca "Impostazioni" direttamente nell'avviso.
+   2. Attiva l'interruttore "Consenti da questa origine".
+   3. Torna indietro e tocca "Installa".
+
+b) Se compare un avviso di Google Play Protect ("App non riconosciuta" o simile):
+   - Tocca "Altri dettagli" e poi "Installa comunque".
+
+
+3. PRIMO AVVIO E CONFIGURAZIONE
+-------------------------------
+1. Apri l'app RichFarmaci appena installata.
+2. Leggi e accetta l'informativa iniziale.
+3. Compila la schermata Configurazione con i tuoi dati (Nome, Cognome, Codice Fiscale) e i dati del tuo Medico curante (telefono per WhatsApp/SMS oppure email).
+
+
+4. PERMESSI RICHIESTI DALL'APP
+------------------------------
+- Notifiche e Sveglie/Promemoria: servono solo se vuoi ricevere gli avvisi per ricordarti di richiedere i farmaci.
+- Contatti (Rubrica): facoltativo, viene chiesto solo se scegli di importare automaticamente i dati del medico dalla tua rubrica.
+- Tutti i dati dei farmaci e delle richieste restano salvati esclusivamente sul tuo telefono.
+
+
+5. AGGIORNAMENTI FUTURI
+-----------------------
+Quando riceverai una nuova versione del file .apk:
+- NON disinstallare la vecchia app.
+- Apri semplicemente il nuovo file .apk e tocca "Aggiorna": tutti i tuoi farmaci e dati resteranno salvati.
+- Per sicurezza, puoi comunque esportare un Backup dalla sezione "Configurazione" prima di aggiornare.
