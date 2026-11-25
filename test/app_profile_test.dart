@@ -30,7 +30,7 @@ void main() {
 
     expect(p.pazienteNome, 'Mario');
     expect(p.pazienteCf, 'RSSMRA40A01H501Z');
-    expect(p.medicoTelefono, '+393331');
+    expect(p.medicoTelefono, '+393331234567');
     expect(env.container.read(activeProfileIdProvider), p.id);
     expect(env.settings.activeProfileId, p.id);
     expect(env.container.read(isConfiguredProvider), isTrue);

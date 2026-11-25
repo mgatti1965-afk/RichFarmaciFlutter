@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/flags_providers.dart';
 import '../../app/request_controller.dart';
 import '../../app/state_providers.dart';
+import '../../data/models/enums.dart';
 import '../../data/models/medication.dart';
 import '../../data/models/sent_request.dart';
 import '../../domain/request_selection.dart';
@@ -29,6 +30,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   bool _isSettingsOpen = false;
+  bool _isSending = false;
 
   @override
   void initState() {
@@ -83,34 +85,91 @@ class _MainScreenState extends ConsumerState<MainScreen>
   }
 
   Future<void> _openQuickMessage() async {
+    if (_isSending) return;
     final customText = await showDialog<String>(
       context: context,
       builder: (_) => const QuickMessageDialog(),
     );
     if (customText == null || customText.trim().isEmpty) return;
+    if (!mounted) return;
 
-    final requestCtrl = ref.read(requestControllerProvider);
-    final message = await requestCtrl.buildQuickMessage(customText);
-    if (message == null) return;
-    final opened = await requestCtrl.openSendApp(message);
-    if (opened) {
-      await requestCtrl.recordSent(message);
-      if (mounted) {
-        _showSentConfirmationDialog(context);
+    setState(() => _isSending = true);
+    try {
+      final requestCtrl = ref.read(requestControllerProvider);
+      final message = await requestCtrl.buildQuickMessage(customText);
+      if (message == null) return;
+      var opened = await requestCtrl.openSendApp(message);
+      if (!opened && mounted) {
+        final fallbacks = await requestCtrl.availableFallbackChannels();
+        if (fallbacks.isNotEmpty && mounted) {
+          final chosen = await _pickFallbackChannel(fallbacks);
+          if (chosen != null) {
+            opened = await requestCtrl.openSendApp(message, channel: chosen);
+          }
+        }
       }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Impossibile aprire l\'applicazione per l\'invio.', style: TextStyle(fontSize: 16)),
-            backgroundColor: AppColors.redDanger,
-          ),
-        );
+      if (opened) {
+        await requestCtrl.recordSent(message);
+        if (mounted) {
+          _showSentConfirmationDialog(context);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Impossibile aprire l\'applicazione per l\'invio.', style: TextStyle(fontSize: 16)),
+              backgroundColor: AppColors.redDanger,
+            ),
+          );
+        }
       }
+    } finally {
+      if (mounted) setState(() => _isSending = false);
     }
   }
 
+  Future<SendChannel?> _pickFallbackChannel(List<SendChannel> channels) {
+    String labelFor(SendChannel channel) {
+      switch (channel) {
+        case SendChannel.whatsapp:
+          return 'Invia con WhatsApp';
+        case SendChannel.sms:
+          return 'Invia con SMS';
+        case SendChannel.email:
+          return 'Invia con Email';
+      }
+    }
+
+    return showDialog<SendChannel>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Canale non disponibile'),
+        content: const Text(
+          'Impossibile aprire l\'app selezionata. Vuoi provare con un altro canale?',
+          style: TextStyle(fontSize: 17, height: 1.4),
+        ),
+        actions: [
+          for (final channel in channels)
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(channel),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 52),
+                backgroundColor: AppColors.greenPrimary,
+                foregroundColor: AppColors.white,
+              ),
+              child: Text(labelFor(channel), style: const TextStyle(fontSize: 17)),
+            ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Annulla', style: TextStyle(fontSize: 17)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _sendRequest() async {
+    if (_isSending) return;
     final canSend = ref.read(canSendProvider);
     if (!canSend) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -130,16 +189,31 @@ class _MainScreenState extends ConsumerState<MainScreen>
       return;
     }
 
-    final sent = await ref.read(requestControllerProvider).sendRequest();
-    if (sent != null && mounted) {
-      _showSentConfirmationDialog(context);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Impossibile aprire l\'app di invio o richiesta annullata.', style: TextStyle(fontSize: 16)),
-          backgroundColor: AppColors.orangeAlert,
-        ),
-      );
+    setState(() => _isSending = true);
+    try {
+      final requestCtrl = ref.read(requestControllerProvider);
+      var sent = await requestCtrl.sendRequest();
+      if (sent == null && mounted) {
+        final fallbacks = await requestCtrl.availableFallbackChannels();
+        if (fallbacks.isNotEmpty && mounted) {
+          final chosen = await _pickFallbackChannel(fallbacks);
+          if (chosen != null) {
+            sent = await requestCtrl.sendRequest(channel: chosen);
+          }
+        }
+      }
+      if (sent != null && mounted) {
+        _showSentConfirmationDialog(context);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossibile aprire l\'app di invio o richiesta annullata.', style: TextStyle(fontSize: 16)),
+            backgroundColor: AppColors.orangeAlert,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSending = false);
     }
   }
 
@@ -154,7 +228,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
             SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Messaggio Inviato',
+                'App di Invio Aperta',
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -165,7 +239,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
           ],
         ),
         content: const Text(
-          "Verificane l'effettiva consegna.",
+          "Controlla il messaggio nell'app esterna e conferma l'invio.",
           style: TextStyle(
             fontSize: 17,
             color: AppColors.slate900,
@@ -612,20 +686,31 @@ class _MainScreenState extends ConsumerState<MainScreen>
               child: SafeArea(
                 child: selectedCount > 0
                     ? ElevatedButton.icon(
-                        onPressed: _sendRequest,
+                        onPressed: _isSending ? null : _sendRequest,
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 60),
                           backgroundColor: AppColors.greenPrimary,
                         ),
-                        icon: const Icon(Icons.send, size: 24),
+                        icon: _isSending
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  color: AppColors.white,
+                                ),
+                              )
+                            : const Icon(Icons.send, size: 24),
                         label: Text(
-                          'INVIA RICHIESTA AL MEDICO ($selectedCount)',
+                          _isSending
+                              ? 'APERTURA IN CORSO...'
+                              : 'INVIA RICHIESTA AL MEDICO ($selectedCount)',
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                       )
                     : Center(
                         child: ElevatedButton.icon(
-                          onPressed: _openQuickMessage,
+                          onPressed: _isSending ? null : _openQuickMessage,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.greenPrimary,
                             foregroundColor: AppColors.white,

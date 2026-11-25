@@ -5,6 +5,7 @@ import 'package:richfarmaci/app/profile_controller.dart';
 import 'package:richfarmaci/app/providers.dart';
 import 'package:richfarmaci/app/request_controller.dart';
 import 'package:richfarmaci/app/state_providers.dart';
+import 'package:richfarmaci/data/models/enums.dart';
 import 'package:richfarmaci/services/archive_file_service.dart';
 
 import 'app_helpers.dart';
@@ -38,7 +39,7 @@ void main() {
       expect(sent, isNotNull);
       expect(env.links.opened.length, 1);
       expect(env.links.opened.single,
-          startsWith('https://api.whatsapp.com/send?phone=393331&text='));
+          startsWith('https://api.whatsapp.com/send?phone=393331234567&text='));
       expect(env.container.read(historyProvider).value!.length, 1);
       expect(env.container.read(requestSelectionProvider).isEmpty, isTrue);
     });
@@ -62,6 +63,35 @@ void main() {
       expect(await requests.sendRequest(), isNull);
       expect(await requests.openSendApp('x'), isFalse);
       expect(env.links.opened, isEmpty);
+    });
+
+    test('con selezione vuota sendRequest non apre nulla e non salva storico',
+        () async {
+      final sent = await env.container.read(requestControllerProvider).sendRequest();
+      await env.settle();
+
+      expect(sent, isNull);
+      expect(env.links.opened, isEmpty);
+      expect(env.container.read(historyProvider).value, isEmpty);
+    });
+
+    test('fallback su canale alternativo apre il link corretto e salva nello storico',
+        () async {
+      await selectOne();
+      env.links.succeeds = false;
+      final requests = env.container.read(requestControllerProvider);
+
+      expect(await requests.sendRequest(), isNull);
+      final fallbacks = await requests.availableFallbackChannels();
+      expect(fallbacks, [SendChannel.sms]);
+
+      env.links.succeeds = true;
+      final sent = await requests.sendRequest(channel: fallbacks.first);
+      await env.settle();
+
+      expect(sent, isNotNull);
+      expect(env.links.opened.last, startsWith('sms:+393331234567?body='));
+      expect(env.container.read(historyProvider).value!.length, 1);
     });
   });
 

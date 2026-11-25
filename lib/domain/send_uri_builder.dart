@@ -56,8 +56,17 @@ class SendUriBuilder {
     PatientSettings settings,
     String message, {
     bool ios = false,
+  }) =>
+      forChannel(settings.tipoInvio, settings, message, ios: ios);
+
+  /// Costruisce il link per uno specifico [channel] usando i recapiti in [settings].
+  static String forChannel(
+    SendChannel channel,
+    PatientSettings settings,
+    String message, {
+    bool ios = false,
   }) {
-    switch (settings.tipoInvio) {
+    switch (channel) {
       case SendChannel.whatsapp:
         return whatsapp(settings.medicoTelefono, message, ios: ios);
       case SendChannel.sms:

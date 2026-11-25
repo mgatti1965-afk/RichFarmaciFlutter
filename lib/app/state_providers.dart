@@ -64,7 +64,7 @@ final isConfiguredProvider = Provider<bool>(
 /// Vero se il profilo attivo ha tutti i dati per inviare una richiesta.
 final canSendProvider = Provider<bool>((ref) {
   final profile = ref.watch(activeProfileProvider);
-  return profile != null && SettingsRules.isComplete(profile.toSettings());
+  return profile != null && SettingsRules.canSend(profile.toSettings());
 });
 
 /// Scelta dei farmaci nel modulo di richiesta. Si svuota da sola

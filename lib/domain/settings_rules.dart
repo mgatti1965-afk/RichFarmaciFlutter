@@ -61,6 +61,26 @@ class SettingsRules {
         hasContact;
   }
 
+  /// Vero se i campi obbligatori sono presenti e il recapito del canale scelto
+  /// e' formalmente valido.
+  static bool canSend(PatientSettings s) {
+    if (!isComplete(s)) return false;
+    return s.tipoInvio == SendChannel.email
+        ? isValidEmail(s.medicoEmail)
+        : isValidPhone(s.medicoTelefono);
+  }
+
+  /// Canali alternativi a [PatientSettings.tipoInvio] per cui il profilo
+  /// dispone di un recapito formalmente valido.
+  static List<SendChannel> fallbackChannels(PatientSettings s) {
+    return SendChannel.values.where((channel) {
+      if (channel == s.tipoInvio) return false;
+      return channel == SendChannel.email
+          ? isValidEmail(s.medicoEmail)
+          : isValidPhone(s.medicoTelefono);
+    }).toList();
+  }
+
   /// Elenco dei campi mancanti, in parole semplici (per i messaggi
   /// agli utenti). Vuoto se i dati sono completi.
   static List<String> missingFields(PatientSettings s) {

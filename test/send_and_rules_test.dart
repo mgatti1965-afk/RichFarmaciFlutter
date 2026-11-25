@@ -160,5 +160,57 @@ void main() {
       );
       expect(SettingsRules.missingFields(complete), isEmpty);
     });
+
+    test('canSend richiede recapito formalmente valido per il canale scelto', () {
+      expect(SettingsRules.canSend(complete), isFalse);
+      expect(
+        SettingsRules.canSend(complete.copyWith(medicoTelefono: '+393331234567')),
+        isTrue,
+      );
+      expect(
+        SettingsRules.canSend(complete.copyWith(medicoTelefono: '123')),
+        isFalse,
+      );
+      expect(
+        SettingsRules.canSend(complete.copyWith(
+          tipoInvio: SendChannel.email,
+          medicoEmail: 'dottore@',
+        )),
+        isFalse,
+      );
+      expect(
+        SettingsRules.canSend(complete.copyWith(
+          tipoInvio: SendChannel.email,
+          medicoEmail: 'dottore@email.it',
+        )),
+        isTrue,
+      );
+    });
+
+    test('fallbackChannels restituisce solo i canali alternativi con recapito valido',
+        () {
+      expect(
+        SettingsRules.fallbackChannels(complete.copyWith(
+          medicoTelefono: '+393331234567',
+          medicoEmail: '',
+        )),
+        [SendChannel.sms],
+      );
+      expect(
+        SettingsRules.fallbackChannels(complete.copyWith(
+          medicoTelefono: '+393331234567',
+          medicoEmail: 'dottore@email.it',
+        )),
+        [SendChannel.sms, SendChannel.email],
+      );
+      expect(
+        SettingsRules.fallbackChannels(complete.copyWith(
+          tipoInvio: SendChannel.email,
+          medicoTelefono: '123',
+          medicoEmail: 'dottore@email.it',
+        )),
+        isEmpty,
+      );
+    });
   });
 }

@@ -129,7 +129,7 @@ void main() {
     test('messaggio veloce', () {
       expect(
         buildQuickMessage(settings, 'Ricetta pronta?'),
-        'Messaggio da Mario Rossi (CF: rssmra40a01h501z):\n\nRicetta pronta?',
+        'Messaggio da Mario Rossi (CF: RSSMRA40A01H501Z):\n\nRicetta pronta?',
       );
     });
 

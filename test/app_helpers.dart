@@ -165,6 +165,6 @@ PatientSettings validSettings({
       pazienteNome: ' Mario ',
       pazienteCf: cf,
       medicoNome: 'Dott. Bianchi',
-      medicoTelefono: '+39 333 1',
+      medicoTelefono: '+39 333 1234567',
       notificheAttive: notifiche,
     );

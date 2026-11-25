@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/models/enums.dart';
 import '../data/models/profile.dart';
 import '../data/models/sent_request.dart';
 import '../domain/message_builder.dart';
 import '../domain/send_uri_builder.dart';
+import '../domain/settings_rules.dart';
 import 'providers.dart';
 import 'state_providers.dart';
 
@@ -41,12 +43,29 @@ class RequestController {
   }
 
   /// Link per aprire WhatsApp, SMS o email col testo gia' pronto,
-  /// secondo il canale scelto nel profilo. Null senza profilo attivo.
-  Future<String?> buildSendUri(String message, {bool? ios}) async {
+  /// secondo [channel] o il canale scelto nel profilo. Null senza profilo attivo.
+  Future<String?> buildSendUri(
+    String message, {
+    SendChannel? channel,
+    bool? ios,
+  }) async {
     final profile = await _activeProfile();
     if (profile == null) return null;
     final isIos = ios ?? (defaultTargetPlatform == TargetPlatform.iOS);
-    return SendUriBuilder.forSettings(profile.toSettings(), message, ios: isIos);
+    final settings = profile.toSettings();
+    return SendUriBuilder.forChannel(
+      channel ?? settings.tipoInvio,
+      settings,
+      message,
+      ios: isIos,
+    );
+  }
+
+  /// Canali alternativi disponibili per il profilo attivo in caso di errore.
+  Future<List<SendChannel>> availableFallbackChannels() async {
+    final profile = await _activeProfile();
+    if (profile == null) return const <SendChannel>[];
+    return SettingsRules.fallbackChannels(profile.toSettings());
   }
 
   /// Salva la richiesta nello storico con l'ora attuale e svuota la scelta.
@@ -72,9 +91,13 @@ class RequestController {
   /// Apre WhatsApp, SMS o email col testo pronto. Restituisce vero se
   /// l'app e' stata aperta. Non salva nulla nello storico: lo si fa con
   /// [recordSent] solo se l'apertura e' riuscita.
-  Future<bool> openSendApp(String message, {bool? ios}) async {
+  Future<bool> openSendApp(
+    String message, {
+    SendChannel? channel,
+    bool? ios,
+  }) async {
     final isIos = ios ?? (defaultTargetPlatform == TargetPlatform.iOS);
-    final uri = await buildSendUri(message, ios: isIos);
+    final uri = await buildSendUri(message, channel: channel, ios: isIos);
     if (uri == null) {
       _ref.read(telemetryProvider).track('message_send_failed', params: {
         'reason': 'uri_not_available',
@@ -95,11 +118,12 @@ class RequestController {
   /// Invia la richiesta in un colpo solo: compone il testo, apre l'app e,
   /// se si e' aperta, salva la voce nello storico. Restituisce la voce
   /// salvata, oppure null se non c'e' un profilo o l'app non si e' aperta.
-  Future<SentRequest?> sendRequest({bool? ios}) async {
+  Future<SentRequest?> sendRequest({SendChannel? channel, bool? ios}) async {
+    if (_ref.read(requestSelectionProvider).isEmpty) return null;
     final isIos = ios ?? (defaultTargetPlatform == TargetPlatform.iOS);
     final message = await buildMessage();
     if (message == null) return null;
-    if (!await openSendApp(message, ios: isIos)) return null;
+    if (!await openSendApp(message, channel: channel, ios: isIos)) return null;
     return recordSent(message);
   }
 

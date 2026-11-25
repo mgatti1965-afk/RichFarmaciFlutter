@@ -49,7 +49,7 @@ void main() {
 
     test('link di invio secondo il canale (WhatsApp di default)', () async {
       final uri = await env.container.read(requestControllerProvider).buildSendUri('Ciao');
-      expect(uri, 'https://api.whatsapp.com/send?phone=393331&text=Ciao');
+      expect(uri, 'https://api.whatsapp.com/send?phone=393331234567&text=Ciao');
     });
 
     test('messaggio veloce con i dati del paziente', () async {

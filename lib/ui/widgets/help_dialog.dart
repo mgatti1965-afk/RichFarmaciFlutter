@@ -207,7 +207,7 @@ class _HelpDialogState extends State<HelpDialog> {
           ),
           _HelpBullet(
             text:
-                'Premi "INVIA RICHIESTA AL MEDICO" per trasmettere il messaggio con WhatsApp, SMS o Email.',
+                'Premi "INVIA RICHIESTA AL MEDICO" per aprire WhatsApp, SMS o Email con il testo già pronto, poi conferma l\'invio nell\'app esterna.',
           ),
           _HelpBullet(
             text:

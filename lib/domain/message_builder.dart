@@ -58,7 +58,7 @@ String buildRequestMessage({
 
 /// Messaggio libero con i dati del paziente per farsi riconoscere.
 String buildQuickMessage(PatientSettings settings, String customText) =>
-    'Messaggio da ${settings.pazienteNome} (CF: ${settings.pazienteCf}):'
+    'Messaggio da ${settings.pazienteNome} (CF: ${settings.pazienteCf.toUpperCase()}):'
     '\n\n$customText';
 
 /// Farmaci da salvare nello storico. La nota unisce quella fissa e quella
