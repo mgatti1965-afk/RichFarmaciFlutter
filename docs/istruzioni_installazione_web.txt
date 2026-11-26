@@ -15,11 +15,10 @@ La versione Web di RichFarmaci funziona direttamente dal browser (su smartphone 
 In questo modo avrai l'icona di RichFarmaci sul telefono come una normale applicazione.
 
 Su iPhone / iPad (usando Safari):
-1. Apri il link con Safari.
-2. Tocca l'icona Condividi (il quadrato con la freccia verso l'alto, in basso o in alto).
-3. Scorri il menu e tocca "Aggiungi alla schermata Home".
-4. Tocca "Aggiungi" in alto a destra.
-5. Esci da Safari e apri RichFarmaci dalla nuova icona creata sulla schermata Home (usa sempre questa icona per i tuoi dati e non eliminarla).
+1. Apri il link con Safari (comparirà subito la prima schermata dell'app: non iniziare ancora da qui).
+2. Tocca l'icona Condividi (il quadrato con la freccia verso l'alto, in basso o in alto), scorri il menu e tocca "Aggiungi alla schermata Home", poi tocca "Aggiungi" in alto a destra per creare la nuova icona.
+3. Torna in Safari e chiudi la prima schermata aperta (tocca l'icona con i due quadratini sovrapposti in basso a destra, poi la "X" sulla scheda, oppure chiudi Safari).
+4. Apri RichFarmaci dalla nuova icona creata sulla schermata Home (usa sempre questa icona per i tuoi dati e non eliminarla).
 
 Su Android (usando Chrome):
 1. Apri il link con Google Chrome.
@@ -40,5 +39,5 @@ Su Computer (Chrome o Edge):
 4. COSE IMPORTANTI DA SAPERE SULLA VERSIONE WEB
 -----------------------------------------------
 - I dati restano sul dispositivo: tutto ciò che inserisci viene salvato nella memoria del browser che stai usando, non su server esterni.
-- Attenzione a non cancellare i dati del sito: se svuoti cache/dati del browser, potresti perdere la lista dei farmaci. Usa regolarmente la funzione di Backup in "Configurazione" per salvare una copia di sicurezza sul telefono o PC.
+- Attenzione a non cancellare i dati del sito: se svuoti cache/dati del browser, potresti perdere la lista dei farmaci. Usa regolarmente la funzione Salva in "Configurazione" per salvare una copia di sicurezza sul telefono o PC.
 - Promemoria: la versione Web non può inviare notifiche automatiche quando il browser è chiuso (a differenza dell'app Android).
