@@ -19,6 +19,7 @@ Su iPhone / iPad (usando Safari):
 2. Tocca l'icona Condividi (il quadrato con la freccia verso l'alto, in basso o in alto).
 3. Scorri il menu e tocca "Aggiungi alla schermata Home".
 4. Tocca "Aggiungi" in alto a destra.
+5. Esci da Safari e apri RichFarmaci dalla nuova icona creata sulla schermata Home (usa sempre questa icona per i tuoi dati e non eliminarla).
 
 Su Android (usando Chrome):
 1. Apri il link con Google Chrome.
@@ -31,7 +32,7 @@ Su Computer (Chrome o Edge):
 
 3. PRIMO AVVIO
 --------------
-1. Apri RichFarmaci dalla nuova icona creata (o dal link).
+1. Apri RichFarmaci sempre dalla nuova icona creata sulla schermata Home (non dal link nel browser).
 2. Accetta l'informativa iniziale.
 3. Inserisci i tuoi dati e quelli del tuo Medico nella sezione Configurazione.
 
