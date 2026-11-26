@@ -41,6 +41,59 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <div id="loading-splash" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#F8FAFC;color:#0F172A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:24px;text-align:center;">
+    <div id="loading-spinner" style="width:40px;height:40px;border:4px solid #E2E8F0;border-top-color:#2E7D32;border-radius:50%;animation:rf-spin 0.9s linear infinite;margin-bottom:16px;"></div>
+    <div id="loading-text" style="font-size:18px;font-weight:600;">Caricamento RichFarmaci...</div>
+    <div id="loading-error" style="display:none;margin-top:16px;max-width:360px;">
+      <p style="font-size:15px;color:#B91C1C;margin:0 0 12px 0;">Si è verificato un problema durante l'avvio dell'app.</p>
+      <p id="loading-error-detail" style="font-size:12px;color:#475569;word-break:break-word;margin:0 0 16px 0;"></p>
+      <button onclick="location.reload()" style="background:#2E7D32;color:#fff;border:none;border-radius:10px;padding:12px 20px;font-size:16px;font-weight:600;cursor:pointer;">Ricarica</button>
+    </div>
+  </div>
+  <style>
+    @keyframes rf-spin { to { transform: rotate(360deg); } }
+  </style>
+  <script>
+    (function () {
+      var firstFrame = false;
+      function showBootError(msg) {
+        if (firstFrame) return;
+        var sp = document.getElementById('loading-spinner');
+        var tx = document.getElementById('loading-text');
+        var er = document.getElementById('loading-error');
+        var dt = document.getElementById('loading-error-detail');
+        if (sp) sp.style.display = 'none';
+        if (tx) tx.textContent = 'RichFarmaci';
+        if (dt && msg) dt.textContent = String(msg);
+        if (er) er.style.display = 'block';
+      }
+      window.addEventListener('error', function (e) {
+        showBootError(e.message || (e.error && e.error.message) || 'Errore sconosciuto');
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        var r = e.reason;
+        showBootError((r && (r.message || r.toString())) || 'Errore asincrono');
+      });
+      window.addEventListener('flutter-first-frame', function () {
+        firstFrame = true;
+        var splash = document.getElementById('loading-splash');
+        if (splash) splash.remove();
+        setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 100);
+      });
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (r) { r.unregister(); });
+        }).catch(function () {});
+      }
+      if ('caches' in window) {
+        caches.keys().then(function (keys) {
+          keys.forEach(function (k) {
+            if (k.indexOf('flutter') !== -1) caches.delete(k);
+          });
+        }).catch(function () {});
+      }
+    })();
+  </script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
