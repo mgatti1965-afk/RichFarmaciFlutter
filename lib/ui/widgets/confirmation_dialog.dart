@@ -7,11 +7,13 @@ import '../theme/app_theme.dart';
 Future<bool> showConfirmDeleteDialog({
   required BuildContext context,
   required String title,
-  required String message,
+  String? message,
+  Widget? content,
   String confirmLabel = 'Sì, cancella',
   String cancelLabel = 'No, annulla',
   bool isDanger = true,
 }) async {
+  assert(message != null || content != null);
   final result = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
@@ -36,14 +38,15 @@ Future<bool> showConfirmDeleteDialog({
           ),
         ],
       ),
-      content: Text(
-        message,
-        style: const TextStyle(
-          fontSize: 18,
-          color: AppColors.slate900,
-          height: 1.4,
-        ),
-      ),
+      content: content ??
+          Text(
+            message ?? '',
+            style: const TextStyle(
+              fontSize: 18,
+              color: AppColors.slate900,
+              height: 1.4,
+            ),
+          ),
       actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       actions: [
         Row(

@@ -497,8 +497,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final confirmed = await showConfirmDeleteDialog(
         context: context,
         title: 'Importa Configurazione',
-        message:
-            'I dati attuali (pazienti, farmaci e storico) verranno sostituiti con quelli dell\'archivio.\n\nCerca il file:\n$fileName\n(di solito nella cartella Download).\n\nVuoi procedere?',
+        content: Text.rich(
+          TextSpan(
+            style: const TextStyle(
+              fontSize: 18,
+              color: AppColors.slate900,
+              height: 1.4,
+            ),
+            children: [
+              const TextSpan(
+                text:
+                    'I dati attuali (pazienti, farmaci e storico) verranno sostituiti con quelli dell\'archivio.\n\nCerca il file:\n',
+              ),
+              TextSpan(
+                text: fileName,
+                style: const TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const TextSpan(
+                text:
+                    '\n(di solito nella cartella Download).\n\nVuoi procedere?',
+              ),
+            ],
+          ),
+        ),
         confirmLabel: 'Sì, procedi',
         cancelLabel: 'No, annulla',
         isDanger: true,
