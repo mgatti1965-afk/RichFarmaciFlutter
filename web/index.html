@@ -56,16 +56,30 @@
   </style>
   <script>
     (function () {
-      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      if (isIOS) {
-        window.flutterConfiguration = {
-          canvasKitForceCpuOnly: true,
-          canvasKitMaximumSurfaces: 1
+      var isDebug = location.search.indexOf('debug=1') !== -1;
+      var debugBox = null;
+      var debugLogs = [];
+      function logDebug(msg) {
+        debugLogs.push(String(msg));
+        if (isDebug && debugBox) {
+          debugBox.textContent = debugLogs.slice(-20).join('\n');
+        }
+      }
+      if (isDebug) {
+        debugBox = document.createElement('pre');
+        debugBox.id = 'rf-debug-box';
+        debugBox.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;max-height:45vh;overflow:auto;z-index:999999;background:rgba(15,23,42,0.92);color:#e2e8f0;font-size:11px;line-height:1.35;padding:10px;border-radius:8px;margin:0;white-space:pre-wrap;word-break:break-word;pointer-events:auto;';
+        document.body.appendChild(debugBox);
+        logDebug('UA: ' + navigator.userAgent);
+        var origErr = console.error;
+        console.error = function () {
+          logDebug('[console.error] ' + Array.prototype.slice.call(arguments).join(' '));
+          return origErr.apply(console, arguments);
         };
       }
       var firstFrame = false;
       function showBootError(msg) {
+        logDebug('[bootError] ' + msg);
         if (firstFrame) return;
         var sp = document.getElementById('loading-spinner');
         var tx = document.getElementById('loading-text');
@@ -77,17 +91,34 @@
         if (er) er.style.display = 'block';
       }
       window.addEventListener('error', function (e) {
+        logDebug('[error] ' + (e.message || (e.error && e.error.message) || 'unknown'));
         showBootError(e.message || (e.error && e.error.message) || 'Errore sconosciuto');
       });
       window.addEventListener('unhandledrejection', function (e) {
         var r = e.reason;
-        showBootError((r && (r.message || r.toString())) || 'Errore asincrono');
+        var m = (r && (r.message || r.toString())) || 'Errore asincrono';
+        logDebug('[rejection] ' + m);
+        showBootError(m);
       });
       window.addEventListener('flutter-first-frame', function () {
         firstFrame = true;
+        logDebug('[event] flutter-first-frame');
         var splash = document.getElementById('loading-splash');
         if (splash) splash.remove();
-        setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 100);
+        setTimeout(function () {
+          window.dispatchEvent(new Event('resize'));
+          if (isDebug) {
+            var fv = document.querySelector('flutter-view');
+            var gp = document.querySelector('flt-glass-pane');
+            var cv = document.querySelectorAll('canvas');
+            var r = fv ? fv.getBoundingClientRect() : (gp ? gp.getBoundingClientRect() : null);
+            logDebug('flutter-view=' + !!fv + ' glass-pane=' + !!gp + ' canvases=' + cv.length + (r ? (' rect=' + Math.round(r.width) + 'x' + Math.round(r.height)) : ''));
+            if (cv.length > 0) {
+              var cr = cv[0].getBoundingClientRect();
+              logDebug('canvas0=' + cv[0].width + 'x' + cv[0].height + ' css=' + Math.round(cr.width) + 'x' + Math.round(cr.height));
+            }
+          }
+        }, 500);
       });
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function (regs) {
